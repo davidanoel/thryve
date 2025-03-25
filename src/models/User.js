@@ -47,6 +47,38 @@ const moodEntrySchema = new mongoose.Schema({
   },
 });
 
+const goalSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  description: String,
+  type: {
+    type: String,
+    required: true,
+    enum: ["mood", "sleep", "activity", "social"],
+  },
+  target: {
+    type: Number,
+    required: true,
+  },
+  deadline: Date,
+  progress: {
+    type: Number,
+    default: 0,
+  },
+  status: {
+    type: String,
+    enum: ["active", "completed", "abandoned"],
+    default: "active",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  completedAt: Date,
+});
+
 const UserSchema = new mongoose.Schema(
   {
     name: {
@@ -69,6 +101,7 @@ const UserSchema = new mongoose.Schema(
       select: false,
     },
     moodEntries: [moodEntrySchema],
+    goals: [goalSchema],
     preferences: {
       notifications: {
         type: Boolean,
@@ -119,5 +152,63 @@ UserSchema.methods.getSignedJwtToken = function () {
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Update goal progress when a new mood entry is added
+UserSchema.pre("save", function (next) {
+  if (this.isModified("moodEntries")) {
+    const recentEntries = this.moodEntries.slice(-7);
+
+    this.goals.forEach((goal, index) => {
+      if (goal.status !== "active") return;
+
+      let progress = 0;
+      switch (goal.type) {
+        case "mood":
+          const avgMood =
+            recentEntries.reduce((sum, entry) => {
+              const moodValue = {
+                "Very Happy": 5,
+                Happy: 4,
+                Neutral: 3,
+                Sad: 2,
+                "Very Sad": 1,
+              }[entry.mood];
+              return sum + moodValue;
+            }, 0) / recentEntries.length;
+          progress = (avgMood / goal.target) * 100;
+          break;
+
+        case "sleep":
+          const avgSleep =
+            recentEntries.reduce((sum, entry) => sum + entry.sleepQuality, 0) /
+            recentEntries.length;
+          progress = (avgSleep / goal.target) * 100;
+          break;
+
+        case "social":
+          const avgSocial =
+            recentEntries.reduce((sum, entry) => sum + entry.socialInteractionCount, 0) /
+            recentEntries.length;
+          progress = (avgSocial / goal.target) * 100;
+          break;
+
+        case "activity":
+          const avgActivities =
+            recentEntries.reduce((sum, entry) => sum + entry.activities.length, 0) /
+            recentEntries.length;
+          progress = (avgActivities / goal.target) * 100;
+          break;
+      }
+
+      // Update progress and check if goal is completed
+      this.goals[index].progress = Math.min(Math.max(progress, 0), 100);
+      if (this.goals[index].progress >= 100 && !this.goals[index].completedAt) {
+        this.goals[index].status = "completed";
+        this.goals[index].completedAt = new Date();
+      }
+    });
+  }
+  next();
+});
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);
