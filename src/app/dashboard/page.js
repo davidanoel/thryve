@@ -30,6 +30,9 @@ import {
   ChartPieIcon,
   ArrowPathIcon,
   ArrowTrendingDownIcon,
+  ChartBarSquareIcon,
+  ClockIcon,
+  FireIcon,
 } from "@heroicons/react/24/outline";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -95,10 +98,13 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const [advancedMetrics, setAdvancedMetrics] = useState(null);
+  const [isLoadingAdvancedMetrics, setIsLoadingAdvancedMetrics] = useState(false);
 
   useEffect(() => {
     fetchMoodHistory();
     getPredictions();
+    getAdvancedMetrics();
   }, []);
 
   const fetchMoodHistory = async () => {
@@ -192,6 +198,19 @@ export default function Dashboard() {
       console.error("Error getting predictions:", error);
     } finally {
       setIsLoadingPredictions(false);
+    }
+  };
+
+  const getAdvancedMetrics = async () => {
+    try {
+      setIsLoadingAdvancedMetrics(true);
+      const response = await fetch("/api/analytics/advanced");
+      const data = await response.json();
+      setAdvancedMetrics(data);
+    } catch (error) {
+      console.error("Error getting advanced metrics:", error);
+    } finally {
+      setIsLoadingAdvancedMetrics(false);
     }
   };
 
@@ -450,7 +469,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column - AI Insights and Predictions */}
+        {/* Right Column - AI Insights, Predictions, and Advanced Analytics */}
         <div className="space-y-8">
           {/* AI Insights Card */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -660,6 +679,274 @@ export default function Dashboard() {
                 <p>
                   Add more mood entries to receive predictive analytics and pattern recognition.
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* Advanced Analytics Card */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold mb-6 flex items-center">
+              <ChartBarSquareIcon className="h-6 w-6 text-indigo-600 mr-2" />
+              Advanced Analytics
+            </h2>
+
+            {isLoadingAdvancedMetrics ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <svg
+                  className="animate-spin h-10 w-10 text-indigo-600 mb-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <p className="text-gray-600">Calculating advanced metrics...</p>
+              </div>
+            ) : advancedMetrics ? (
+              <div className="space-y-8">
+                {/* Overview Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-500">Total Entries</span>
+                      <ClockIcon className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">
+                      {advancedMetrics.metrics.totalEntries}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-500">Average Mood</span>
+                      <HeartIcon className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">
+                      {advancedMetrics.metrics.averageMood.toFixed(1)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-500">Mood Volatility</span>
+                      <FireIcon className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">
+                      {advancedMetrics.metrics.moodVolatility.toFixed(1)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Weekly Trends Chart */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Weekly Trends</h3>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <Line
+                      data={{
+                        labels: advancedMetrics.metrics.weeklyTrends.map((week) =>
+                          new Date(week.week).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        ),
+                        datasets: [
+                          {
+                            label: "Mood",
+                            data: advancedMetrics.metrics.weeklyTrends.map(
+                              (week) => week.averageMood
+                            ),
+                            borderColor: "rgb(99, 102, 241)",
+                            tension: 0.4,
+                          },
+                          {
+                            label: "Sleep Quality",
+                            data: advancedMetrics.metrics.weeklyTrends.map(
+                              (week) => week.averageSleepQuality
+                            ),
+                            borderColor: "rgb(59, 130, 246)",
+                            tension: 0.4,
+                          },
+                          {
+                            label: "Energy Level",
+                            data: advancedMetrics.metrics.weeklyTrends.map(
+                              (week) => week.averageEnergyLevel
+                            ),
+                            borderColor: "rgb(16, 185, 129)",
+                            tension: 0.4,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        plugins: {
+                          legend: {
+                            position: "top",
+                          },
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 4,
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Activity Correlations */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Activity Impact on Mood
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {advancedMetrics.metrics.activityCorrelations
+                      .sort((a, b) => b.averageMood - a.averageMood)
+                      .slice(0, 4)
+                      .map((activity, index) => (
+                        <div key={index} className="bg-gray-50 rounded-xl p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+                              {activity.activity}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {activity.frequency} times
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <div className="flex items-center">
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-indigo-600 h-2 rounded-full"
+                                  style={{
+                                    width: `${(activity.averageMood / 4) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="ml-2 text-sm text-gray-600">
+                                {activity.averageMood.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Factor Correlations */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Factor Correlations</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Sleep Impact */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        Sleep Quality Impact
+                      </h4>
+                      <div className="space-y-2">
+                        {advancedMetrics.metrics.sleepImpact
+                          .sort((a, b) => b.averageMood - a.averageMood)
+                          .map((sleep, index) => (
+                            <div key={index} className="flex items-center">
+                              <span className="text-sm text-gray-600 w-8">
+                                Level {sleep.quality}
+                              </span>
+                              <div className="flex-1 mx-2 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-indigo-600 h-2 rounded-full"
+                                  style={{
+                                    width: `${(sleep.averageMood / 4) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600 w-12">
+                                {sleep.averageMood.toFixed(1)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Social Impact */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        Social Interaction Impact
+                      </h4>
+                      <div className="space-y-2">
+                        {advancedMetrics.metrics.socialImpact
+                          .sort((a, b) => b.averageMood - a.averageMood)
+                          .map((social, index) => (
+                            <div key={index} className="flex items-center">
+                              <span className="text-sm text-gray-600 w-8">{social.count}</span>
+                              <div className="flex-1 mx-2 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-indigo-600 h-2 rounded-full"
+                                  style={{
+                                    width: `${(social.averageMood / 4) * 100}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600 w-12">
+                                {social.averageMood.toFixed(1)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Statistical Insights */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Statistical Insights</h3>
+                  <div className="space-y-4">
+                    {advancedMetrics.insights.map((insight, index) => (
+                      <div key={index} className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            {insight.type === "volatility" && (
+                              <FireIcon className="h-5 w-5 text-red-500" />
+                            )}
+                            {insight.type === "trend" && (
+                              <ArrowTrendingUpIcon className="h-5 w-5 text-green-500" />
+                            )}
+                            {insight.type === "activity" && (
+                              <BeakerIcon className="h-5 w-5 text-blue-500" />
+                            )}
+                            {insight.type === "sleep" && (
+                              <MoonIcon className="h-5 w-5 text-purple-500" />
+                            )}
+                            {insight.type === "social" && (
+                              <UserGroupIcon className="h-5 w-5 text-yellow-500" />
+                            )}
+                            {insight.type === "stress" && (
+                              <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <h4 className="text-sm font-medium text-gray-900">{insight.title}</h4>
+                            <p className="mt-1 text-sm text-gray-600">{insight.description}</p>
+                            <p className="mt-2 text-sm text-indigo-600">{insight.recommendation}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-12">
+                <ChartBarSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p>Add more mood entries to see advanced analytics and insights.</p>
               </div>
             )}
           </div>
