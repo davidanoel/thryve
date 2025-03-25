@@ -24,15 +24,19 @@ export async function GET() {
 
     // Get recent mood entries
     const recentEntries = user.moodEntries
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 10);
 
     // Prepare data for AI analysis
     const moodData = recentEntries.map((entry) => ({
-      date: new Date(entry.date).toISOString().split("T")[0],
+      date: new Date(entry.createdAt).toISOString().split("T")[0],
       mood: entry.mood,
       activities: entry.activities,
       notes: entry.notes,
+      sleepQuality: entry.sleepQuality,
+      energyLevel: entry.energyLevel,
+      socialInteractionCount: entry.socialInteractionCount,
+      stressLevel: entry.stressLevel,
     }));
 
     // Generate AI insights

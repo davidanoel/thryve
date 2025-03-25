@@ -20,6 +20,13 @@ import {
   HeartIcon,
   SparklesIcon,
   CheckCircleIcon,
+  AcademicCapIcon,
+  BeakerIcon,
+  UserGroupIcon,
+  MoonIcon,
+  BoltIcon,
+  UserIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -36,11 +43,48 @@ const activityOptions = [
   "Other",
 ];
 
+// Add slider labels
+const sliderLabels = {
+  sleepQuality: {
+    1: "Poor",
+    2: "Fair",
+    3: "Good",
+    4: "Very Good",
+    5: "Excellent",
+  },
+  energyLevel: {
+    1: "Exhausted",
+    2: "Low",
+    3: "Moderate",
+    4: "High",
+    5: "Very High",
+  },
+  socialInteractionCount: {
+    0: "None",
+    2: "Very Low",
+    4: "Low",
+    6: "Moderate",
+    8: "High",
+    10: "Very High",
+  },
+  stressLevel: {
+    1: "Very Low",
+    2: "Low",
+    3: "Moderate",
+    4: "High",
+    5: "Very High",
+  },
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [mood, setMood] = useState("");
   const [activities, setActivities] = useState([]);
   const [notes, setNotes] = useState("");
+  const [sleepQuality, setSleepQuality] = useState(3);
+  const [energyLevel, setEnergyLevel] = useState(3);
+  const [socialInteractionCount, setSocialInteractionCount] = useState(5);
+  const [stressLevel, setStressLevel] = useState(3);
   const [moodHistory, setMoodHistory] = useState([]);
   const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,15 +110,27 @@ export default function Dashboard() {
     setIsLoading(true);
 
     try {
+      // Format activities properly
+      const formattedActivities = activities.map((activity) => ({
+        name: activity,
+        duration: 30, // Default duration in minutes
+        isSocial: activity === "Social Activity",
+      }));
+
       const response = await fetch("/api/mood/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           mood,
-          activities,
+          activities: formattedActivities,
           notes,
+          sleepQuality,
+          energyLevel,
+          socialInteractionCount,
+          stressLevel,
         }),
       });
 
@@ -83,18 +139,25 @@ export default function Dashboard() {
         setMood("");
         setActivities([]);
         setNotes("");
+        setSleepQuality(3);
+        setEnergyLevel(3);
+        setSocialInteractionCount(5);
+        setStressLevel(3);
 
         // Show success message
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
 
-        // Refresh mood history
+        // Refresh data
         await fetchMoodHistory();
 
         // Get AI insights
         setIsAnalyzing(true);
         await getAIInsights();
         setIsAnalyzing(false);
+      } else {
+        const data = await response.json();
+        console.error("Error submitting mood:", data.error);
       }
     } catch (error) {
       console.error("Error submitting mood:", error);
@@ -113,8 +176,18 @@ export default function Dashboard() {
     }
   };
 
+  // Add helper function to get slider label
+  const getSliderLabel = (type, value) => {
+    const labels = sliderLabels[type];
+    const keys = Object.keys(labels).map(Number);
+    const closest = keys.reduce((prev, curr) => {
+      return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
+    });
+    return `${labels[closest]} (${value})`;
+  };
+
   const chartData = {
-    labels: moodHistory.map((entry) => new Date(entry.date).toLocaleDateString()),
+    labels: moodHistory.map((entry) => new Date(entry.createdAt).toLocaleDateString()),
     datasets: [
       {
         label: "Mood",
@@ -203,11 +276,103 @@ export default function Dashboard() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sleep Quality
+                </label>
+                <div className="flex items-center space-x-2">
+                  <MoonIcon className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={sleepQuality}
+                    onChange={(e) => setSleepQuality(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
+                    {getSliderLabel("sleepQuality", sleepQuality)}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>Poor</span>
+                  <span>Excellent</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Energy Level</label>
+                <div className="flex items-center space-x-2">
+                  <BoltIcon className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={energyLevel}
+                    onChange={(e) => setEnergyLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
+                    {getSliderLabel("energyLevel", energyLevel)}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>Exhausted</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Social Interactions
+                </label>
+                <div className="flex items-center space-x-2">
+                  <UserIcon className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={socialInteractionCount}
+                    onChange={(e) => setSocialInteractionCount(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
+                    {getSliderLabel("socialInteractionCount", socialInteractionCount)}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>None</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stress Level</label>
+                <div className="flex items-center space-x-2">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={stressLevel}
+                    onChange={(e) => setStressLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
+                    {getSliderLabel("stressLevel", stressLevel)}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>Very Low</span>
+                  <span>Very High</span>
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   rows="3"
                   placeholder="How was your day? What's on your mind?"
                 />
@@ -270,7 +435,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-6 flex items-center">
             <LightBulbIcon className="h-6 w-6 text-indigo-600 mr-2" />
-            AI Insights
+            AI Insights & Recommendations
           </h2>
 
           {isAnalyzing ? (
@@ -315,7 +480,12 @@ export default function Dashboard() {
                         <Icon className="h-6 w-6 text-indigo-600" />
                       </div>
                       <div className="ml-4">
-                        <h3 className="text-lg font-medium text-gray-900">{insight.title}</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-medium text-gray-900">{insight.title}</h3>
+                          <span className="text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+                            {insight.category}
+                          </span>
+                        </div>
                         <p className="mt-1 text-gray-600">{insight.description}</p>
                       </div>
                     </div>
@@ -326,9 +496,7 @@ export default function Dashboard() {
           ) : (
             <div className="text-center text-gray-500 py-12">
               <LightBulbIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p>
-                No insights available yet. Add more mood entries to receive personalized analysis.
-              </p>
+              <p>Add more mood entries to receive personalized insights and recommendations.</p>
             </div>
           )}
         </div>

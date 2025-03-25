@@ -2,61 +2,102 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const UserSchema = new mongoose.Schema({
+const activitySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please provide a name"],
+    required: false,
   },
-  email: {
+  duration: {
+    type: Number,
+    required: false,
+  },
+  isSocial: {
+    type: Boolean,
+    required: false,
+  },
+});
+
+const moodEntrySchema = new mongoose.Schema({
+  mood: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+  },
+  activities: {
+    type: [activitySchema],
+    default: [],
+  },
+  notes: {
     type: String,
-    required: [true, "Please provide an email"],
-    unique: true,
-    match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
   },
-  password: {
-    type: String,
-    required: [true, "Please provide a password"],
-    minlength: 8,
-    select: false,
+  sleepQuality: {
+    type: Number,
   },
-  moodEntries: [
-    {
-      date: {
-        type: Date,
-        default: Date.now,
-      },
-      mood: {
-        type: String,
-        required: true,
-        enum: ["Very Happy", "Happy", "Neutral", "Sad", "Very Sad"],
-      },
-      notes: String,
-      activities: [String],
-    },
-  ],
-  preferences: {
-    notifications: {
-      type: Boolean,
-      default: true,
-    },
-    theme: {
-      type: String,
-      default: "light",
-    },
-    reminderTime: {
-      type: String,
-      default: "20:00",
-    },
+  energyLevel: {
+    type: Number,
+  },
+  socialInteractionCount: {
+    type: Number,
+  },
+  stressLevel: {
+    type: Number,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  lastLogin: {
-    type: Date,
-    default: Date.now,
-  },
 });
+
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Please provide a name"],
+    },
+    email: {
+      type: String,
+      required: [true, "Please provide an email"],
+      unique: true,
+      match: [
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        "Please provide a valid email",
+      ],
+    },
+    password: {
+      type: String,
+      required: [true, "Please provide a password"],
+      minlength: 6,
+      select: false,
+    },
+    moodEntries: [moodEntrySchema],
+    preferences: {
+      notifications: {
+        type: Boolean,
+        default: true,
+      },
+      theme: {
+        type: String,
+        default: "light",
+      },
+      reminderTime: {
+        type: String,
+        default: "20:00",
+      },
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+  },
+  {
+    timestamps: true,
+  }
+);
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
