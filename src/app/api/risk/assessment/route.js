@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import User from "@/models/User";
 import RiskAssessment from "@/models/RiskAssessment";
+import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import OpenAI from "openai";
+import { sendEmergencyAlert } from "@/lib/email";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -188,26 +190,46 @@ function getRiskLevel(score) {
   return "low";
 }
 
-async function handleRiskAssessment(riskScore, concerns) {
-  let riskLevel = "low";
-  if (riskScore >= 80) riskLevel = "critical";
-  else if (riskScore >= 60) riskLevel = "high";
-  else if (riskScore >= 40) riskLevel = "medium";
+async function handleRiskAssessment(user, riskScore, riskLevel, riskAssessment) {
+  console.log("Risk score:", riskScore);
 
   // Trigger notifications for high or critical risk
-  if (riskScore >= 60) {
+  if (riskLevel === "high" || riskLevel === "critical") {
     try {
-      await fetch("/api/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          riskLevel,
-          riskScore,
-          concerns,
-        }),
+      // Get verified emergency contacts
+      const contacts = await EmergencyContact.find({
+        userId: user._id,
+        isVerified: true,
       });
+
+      // Filter contacts based on their notification preferences
+      const contactsToNotify = contacts.filter((contact) =>
+        contact.notificationPreferences?.alertThreshold === "high"
+          ? riskLevel === "high" || riskLevel === "critical"
+          : riskLevel === "critical"
+      );
+
+      // Send notifications
+      for (const contact of contactsToNotify) {
+        try {
+          await sendEmergencyAlert({
+            user,
+            contact,
+            riskAssessment: {
+              riskLevel,
+              score: riskScore,
+              ...riskAssessment,
+            },
+          });
+
+          // Update last notified timestamp
+          await EmergencyContact.findByIdAndUpdate(contact._id, {
+            lastNotified: new Date(),
+          });
+        } catch (error) {
+          console.error("Error sending notification to contact:", error);
+        }
+      }
     } catch (error) {
       console.error("Failed to send notifications:", error);
     }
@@ -273,8 +295,8 @@ export async function GET(request) {
       ...stressRisk.concerns,
     ];
 
-    // Determine risk level and handle notifications
-    const riskLevel = await handleRiskAssessment(riskScore, concerns);
+    // Determine risk level
+    const riskLevel = getRiskLevel(riskScore);
 
     // Create risk assessment record
     const assessment = await RiskAssessment.create({
@@ -319,6 +341,12 @@ export async function GET(request) {
         },
       ],
       timestamp: new Date(),
+    });
+
+    // Handle notifications
+    await handleRiskAssessment(user, riskScore, riskLevel, {
+      factors: assessment.factors,
+      timestamp: assessment.timestamp,
     });
 
     return NextResponse.json({

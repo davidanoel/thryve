@@ -37,6 +37,7 @@ export async function POST(req) {
           ? riskAssessment.riskLevel === "high" || riskAssessment.riskLevel === "critical"
           : riskAssessment.riskLevel === "critical")
     );
+    console.log("Contacts to notify:", contactsToNotify);
 
     // Send notifications to each contact
     for (const contact of contactsToNotify) {

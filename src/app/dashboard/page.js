@@ -114,7 +114,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [showMoodForm, setShowMoodForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("patterns");
+  const [activeTab, setActiveTab] = useState("forecast");
   const [activeGoalTab, setActiveGoalTab] = useState("active");
   const [activeAnalyticsTab, setActiveAnalyticsTab] = useState("overview");
   const [riskAssessment, setRiskAssessment] = useState(null);
@@ -712,10 +712,10 @@ export default function Dashboard() {
                                   goal.type === "mood"
                                     ? "bg-purple-50 text-purple-600"
                                     : goal.type === "sleep"
-                                    ? "bg-blue-50 text-blue-600"
-                                    : goal.type === "activity"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-orange-50 text-orange-600"
+                                      ? "bg-blue-50 text-blue-600"
+                                      : goal.type === "activity"
+                                        ? "bg-green-50 text-green-600"
+                                        : "bg-orange-50 text-orange-600"
                                 }`}
                               >
                                 {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
@@ -798,10 +798,10 @@ export default function Dashboard() {
                                   goal.type === "mood"
                                     ? "bg-purple-50 text-purple-600"
                                     : goal.type === "sleep"
-                                    ? "bg-blue-50 text-blue-600"
-                                    : goal.type === "activity"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-orange-50 text-orange-600"
+                                      ? "bg-blue-50 text-blue-600"
+                                      : goal.type === "activity"
+                                        ? "bg-green-50 text-green-600"
+                                        : "bg-orange-50 text-orange-600"
                                 }`}
                               >
                                 {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
@@ -840,8 +840,8 @@ export default function Dashboard() {
                               rec.priority === "high"
                                 ? "bg-red-50 text-red-600"
                                 : rec.priority === "medium"
-                                ? "bg-yellow-50 text-yellow-600"
-                                : "bg-green-50 text-green-600"
+                                  ? "bg-yellow-50 text-yellow-600"
+                                  : "bg-green-50 text-green-600"
                             }`}
                           >
                             {rec.priority.charAt(0).toUpperCase() + rec.priority.slice(1)} Priority
@@ -1121,8 +1121,8 @@ export default function Dashboard() {
                                     correlation.strength === "strong"
                                       ? "bg-green-50 text-green-600"
                                       : correlation.strength === "moderate"
-                                      ? "bg-yellow-50 text-yellow-600"
-                                      : "bg-red-50 text-red-600"
+                                        ? "bg-yellow-50 text-yellow-600"
+                                        : "bg-red-50 text-red-600"
                                   }`}
                                 >
                                   {correlation.strength.charAt(0).toUpperCase() +
@@ -1153,8 +1153,8 @@ export default function Dashboard() {
                                   recommendation.priority === "high"
                                     ? "bg-red-50 text-red-600"
                                     : recommendation.priority === "medium"
-                                    ? "bg-yellow-50 text-yellow-600"
-                                    : "bg-green-50 text-green-600"
+                                      ? "bg-yellow-50 text-yellow-600"
+                                      : "bg-green-50 text-green-600"
                                 }`}
                               >
                                 {recommendation.priority.charAt(0).toUpperCase() +
@@ -1563,10 +1563,10 @@ export default function Dashboard() {
                         riskAssessment.riskLevel === "critical"
                           ? "bg-red-100"
                           : riskAssessment.riskLevel === "high"
-                          ? "bg-orange-100"
-                          : riskAssessment.riskLevel === "medium"
-                          ? "bg-yellow-100"
-                          : "bg-green-100"
+                            ? "bg-orange-100"
+                            : riskAssessment.riskLevel === "medium"
+                              ? "bg-yellow-100"
+                              : "bg-green-100"
                       }`}
                     >
                       <ShieldExclamationIcon
@@ -1574,10 +1574,10 @@ export default function Dashboard() {
                           riskAssessment.riskLevel === "critical"
                             ? "text-red-600"
                             : riskAssessment.riskLevel === "high"
-                            ? "text-orange-600"
-                            : riskAssessment.riskLevel === "medium"
-                            ? "text-yellow-600"
-                            : "text-green-600"
+                              ? "text-orange-600"
+                              : riskAssessment.riskLevel === "medium"
+                                ? "text-yellow-600"
+                                : "text-green-600"
                         }`}
                       />
                     </div>
@@ -1605,12 +1605,12 @@ export default function Dashboard() {
                               factor.type === "mood"
                                 ? "bg-purple-100 text-purple-600"
                                 : factor.type === "language"
-                                ? "bg-blue-100 text-blue-600"
-                                : factor.type === "sleep"
-                                ? "bg-indigo-100 text-indigo-600"
-                                : factor.type === "social"
-                                ? "bg-green-100 text-green-600"
-                                : "bg-orange-100 text-orange-600"
+                                  ? "bg-blue-100 text-blue-600"
+                                  : factor.type === "sleep"
+                                    ? "bg-indigo-100 text-indigo-600"
+                                    : factor.type === "social"
+                                      ? "bg-green-100 text-green-600"
+                                      : "bg-orange-100 text-orange-600"
                             }`}
                           >
                             {factor.type}
@@ -1621,10 +1621,10 @@ export default function Dashboard() {
                             factor.score >= 75
                               ? "text-red-600"
                               : factor.score >= 50
-                              ? "text-orange-600"
-                              : factor.score >= 25
-                              ? "text-yellow-600"
-                              : "text-green-600"
+                                ? "text-orange-600"
+                                : factor.score >= 25
+                                  ? "text-yellow-600"
+                                  : "text-green-600"
                           }`}
                         >
                           {factor.score.toFixed(1)}
@@ -1636,10 +1636,10 @@ export default function Dashboard() {
                             factor.score >= 75
                               ? "bg-red-600"
                               : factor.score >= 50
-                              ? "bg-orange-600"
-                              : factor.score >= 25
-                              ? "bg-yellow-600"
-                              : "bg-green-600"
+                                ? "bg-orange-600"
+                                : factor.score >= 25
+                                  ? "bg-yellow-600"
+                                  : "bg-green-600"
                           }`}
                           style={{ width: `${factor.score}%` }}
                         ></div>
