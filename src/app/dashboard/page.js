@@ -277,7 +277,6 @@ export default function Dashboard() {
       const response = await fetch("/api/risk/assessment");
       if (!response.ok) throw new Error("Failed to fetch risk assessment");
       const data = await response.json();
-      console.log("actual data", data);
       setRiskAssessment(data); // Update this line to use data directly instead of data.assessment
     } catch (error) {
       console.error("Error getting risk assessment:", error);
@@ -1615,7 +1614,6 @@ export default function Dashboard() {
                             }`}
                           >
                             {factor.type}
-                            {console.log(factor)}
                           </span>
                         </div>
                         <span

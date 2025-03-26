@@ -1,36 +1,27 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
+import User from "@/models/User";
+import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
-import { User } from "@/models/User";
-import { EmergencyContact } from "@/models/EmergencyContact";
-import sgMail from "@sendgrid/mail";
-import twilio from "twilio";
+import { sendEmergencyAlert } from "@/lib/email";
 
-// Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
-
-// Initialize Twilio
-const twilioClient =
-  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-    ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    : null;
-
-export async function POST(request) {
+export async function POST(req) {
   try {
     const session = await getServerSession();
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { riskLevel, riskScore, concerns } = await request.json();
+    const body = await req.json();
+    const { riskAssessment } = body;
+
+    if (!riskAssessment) {
+      return NextResponse.json({ error: "Risk assessment data required" }, { status: 400 });
+    }
 
     await connectDB();
 
-    // Get user and their emergency contacts
-    const user = await User.findOne({ email: session.user.email }).populate("emergencyContacts");
-
+    const user = await User.findById(session.userId).populate("emergencyContacts");
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -38,61 +29,37 @@ export async function POST(request) {
     const notificationsSent = [];
     const errors = [];
 
-    // Filter contacts based on risk threshold
+    // Filter contacts to notify based on risk level and their preferences
     const contactsToNotify = user.emergencyContacts.filter(
-      (contact) => contact.alertThreshold <= riskScore && contact.isVerified
+      (contact) =>
+        contact.isVerified &&
+        (contact.notificationPreferences?.alertThreshold === "high"
+          ? riskAssessment.riskLevel === "high" || riskAssessment.riskLevel === "critical"
+          : riskAssessment.riskLevel === "critical")
     );
 
+    // Send notifications to each contact
     for (const contact of contactsToNotify) {
       try {
-        // Prepare notification message
-        const message = {
-          subject: `Mental Health Alert for ${user.name}`,
-          text: `
-Dear ${contact.name},
-
-${user.name} has shown signs of elevated risk in their mental health monitoring:
-
-Risk Level: ${riskLevel}
-Concerns: ${concerns.join(", ")}
-
-Please reach out to them as soon as possible.
-
-Contact Information:
-Phone: ${user.phone || "Not provided"}
-Email: ${user.email}
-
-This is an automated message from Thryve Mental Health Platform.
-          `.trim(),
-        };
-
-        // Send email notification
-        if (contact.notificationMethods.includes("email") && process.env.SENDGRID_API_KEY) {
-          await sgMail.send({
-            to: contact.email,
-            from: process.env.SENDGRID_FROM_EMAIL,
-            ...message,
-          });
-          notificationsSent.push(`Email sent to ${contact.email}`);
-        }
-
-        // Send SMS notification
-        if (contact.notificationMethods.includes("sms") && twilioClient && contact.phone) {
-          await twilioClient.messages.create({
-            body: message.text,
-            to: contact.phone,
-            from: process.env.TWILIO_PHONE_NUMBER,
-          });
-          notificationsSent.push(`SMS sent to ${contact.phone}`);
-        }
-
-        // Update last notified timestamp
-        await EmergencyContact.findByIdAndUpdate(contact._id, {
-          lastNotified: new Date(),
+        const emailSent = await sendEmergencyAlert({
+          user,
+          contact,
+          riskAssessment,
         });
+
+        if (emailSent) {
+          notificationsSent.push(`Email sent to ${contact.email}`);
+
+          // Update last notified timestamp
+          await EmergencyContact.findByIdAndUpdate(contact._id, {
+            lastNotified: new Date(),
+          });
+        } else {
+          errors.push(`Failed to send email to ${contact.email}`);
+        }
       } catch (error) {
-        console.error(`Error sending notification to ${contact.name}:`, error);
-        errors.push(`Failed to notify ${contact.name}: ${error.message}`);
+        console.error("Error sending notification:", error);
+        errors.push(`Error notifying ${contact.name}: ${error.message}`);
       }
     }
 
@@ -102,7 +69,7 @@ This is an automated message from Thryve Mental Health Platform.
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Notification error:", error);
-    return NextResponse.json({ error: "Failed to send notifications" }, { status: 500 });
+    console.error("Send notifications error:", error);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

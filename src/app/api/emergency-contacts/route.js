@@ -4,6 +4,7 @@ import User from "@/models/User";
 import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import crypto from "crypto";
+import { sendVerificationEmail } from "@/lib/email";
 
 // Helper function to generate verification code
 function generateVerificationCode() {
@@ -66,8 +67,11 @@ export async function POST(req) {
       verificationExpires,
     });
 
-    // TODO: Send verification email to emergency contact
-    // This would typically be handled by an email service
+    // Send verification email using Resend
+    const emailSent = await sendVerificationEmail(contact);
+    if (!emailSent) {
+      console.warn("Failed to send verification email to:", email);
+    }
 
     return NextResponse.json({
       success: true,
