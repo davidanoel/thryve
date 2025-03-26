@@ -23,6 +23,11 @@ export default function Navigation() {
             href: "/crisis-resources",
             className: "text-red-600 hover:text-red-700 font-semibold",
           },
+          {
+            name: "Crisis Plan",
+            href: "/crisis-plan",
+            className: "text-red-600 hover:text-red-700 font-semibold",
+          },
         ]
       : []),
   ];
