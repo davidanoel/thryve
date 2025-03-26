@@ -41,7 +41,9 @@ import {
   EnvelopeIcon,
   TrashIcon,
   GlobeAltIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -428,6 +430,22 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error deleting goal:", error);
       setError("Failed to delete goal");
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      // Create a temporary link element
+      const link = document.createElement("a");
+      link.href = "/api/export";
+      link.download = `thryve-data-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Data exported successfully");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data");
     }
   };
 
@@ -1983,6 +2001,18 @@ export default function Dashboard() {
       {showGoalForm && (
         <GoalForm onClose={() => setShowGoalForm(false)} onSubmit={handleGoalSubmit} />
       )}
+
+      {/* Add this button in the top-right corner of the dashboard */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <button
+          onClick={handleExportData}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+          Export Data
+        </button>
+      </div>
     </div>
   );
 }
