@@ -348,19 +348,17 @@ export default function Dashboard() {
         body: JSON.stringify(contactData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setEmergencyContacts(
-          emergencyContacts.map((c) => (c._id === editingContact._id ? data.contact : c))
-        );
-        setShowEmergencyContactForm(false);
-        setEditingContact(null);
-      } else {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
+      if (!response.ok) throw new Error("Failed to update emergency contact");
+
+      const data = await response.json();
+      setEmergencyContacts((prev) =>
+        prev.map((contact) => (contact._id === editingContact._id ? data.data : contact))
+      );
+      setShowEmergencyContactForm(false);
+      setEditingContact(null);
     } catch (error) {
       console.error("Error updating emergency contact:", error);
+      alert("Failed to update emergency contact. Please try again.");
     }
   };
 
@@ -1721,9 +1719,9 @@ export default function Dashboard() {
 
             {/* Emergency Contacts Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center">
-                  <UserGroupIcon className="h-6 w-6 text-indigo-600 mr-2" />
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <PhoneIcon className="h-6 w-6 text-red-500" />
                   Emergency Contacts
                 </h2>
                 <button
@@ -1739,92 +1737,245 @@ export default function Dashboard() {
               </div>
 
               {isLoadingContacts ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <svg
-                    className="animate-spin h-10 w-10 text-indigo-600 mb-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  <p className="text-gray-600">Loading emergency contacts...</p>
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
                 </div>
-              ) : emergencyContacts.length > 0 ? (
+              ) : emergencyContacts.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No emergency contacts added yet.</p>
+              ) : (
                 <div className="space-y-4">
                   {emergencyContacts.map((contact) => (
                     <div
                       key={contact._id}
-                      className="bg-gray-50 rounded-lg p-4 flex items-start justify-between"
+                      className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
                     >
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-900">{contact.name}</h3>
-                        <p className="text-sm text-gray-500">{contact.relationship}</p>
-                        <div className="mt-2 space-y-1">
-                          <p className="text-sm text-gray-600">
-                            <PhoneIcon className="h-4 w-4 inline mr-1" />
-                            {contact.phone}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <EnvelopeIcon className="h-4 w-4 inline mr-1" />
-                            {contact.email}
-                          </p>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold">{contact.name}</h3>
+                          <p className="text-gray-600 text-sm">{contact.relationship}</p>
                         </div>
-                        {!contact.isVerified && (
-                          <span className="inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Pending Verification
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setEditingContact(contact);
-                            setShowEmergencyContactForm(true);
-                          }}
-                          className="text-gray-400 hover:text-indigo-600"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingContact(contact);
+                              setShowEmergencyContactForm(true);
+                            }}
+                            className="text-gray-400 hover:text-indigo-600"
                           >
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteEmergencyContact(contact._id)}
-                          className="text-gray-400 hover:text-red-600"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEmergencyContact(contact._id)}
+                            className="text-gray-400 hover:text-red-600"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm text-gray-600">
+                          <PhoneIcon className="inline-block h-4 w-4 mr-1" />
+                          {contact.phone}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <EnvelopeIcon className="inline-block h-4 w-4 mr-1" />
+                          {contact.email}
+                          {!contact.isVerified && (
+                            <span className="ml-2 text-xs text-red-500">(Unverified)</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="mt-3 text-xs text-gray-500">
+                        <p>Alert Threshold: {contact.notificationPreferences.alertThreshold}</p>
+                        <p>
+                          Notification Methods: {contact.notificationPreferences.methods.join(", ")}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center text-gray-500 py-12">
-                  <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>No emergency contacts added yet.</p>
-                  <p className="mt-2 text-sm">
-                    Add trusted contacts who can be notified in case of emergency.
-                  </p>
-                </div>
               )}
             </div>
+
+            {/* Emergency Contact Form Modal */}
+            {showEmergencyContactForm && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">
+                      {editingContact ? "Edit Emergency Contact" : "Add Emergency Contact"}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowEmergencyContactForm(false);
+                        setEditingContact(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-500"
+                    >
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const contactData = {
+                        name: formData.get("name"),
+                        relationship: formData.get("relationship"),
+                        phone: formData.get("phone"),
+                        email: formData.get("email"),
+                        notificationPreferences: {
+                          alertThreshold: formData.get("alertThreshold"),
+                          methods: Array.from(formData.getAll("notificationMethods")),
+                        },
+                      };
+
+                      if (editingContact) {
+                        handleEditEmergencyContact(contactData);
+                      } else {
+                        handleAddEmergencyContact(contactData);
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        required
+                        defaultValue={editingContact?.name}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="relationship"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Relationship
+                      </label>
+                      <input
+                        type="text"
+                        name="relationship"
+                        id="relationship"
+                        required
+                        defaultValue={editingContact?.relationship}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        required
+                        defaultValue={editingContact?.phone}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        required
+                        defaultValue={editingContact?.email}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="alertThreshold"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Alert Threshold
+                      </label>
+                      <select
+                        name="alertThreshold"
+                        id="alertThreshold"
+                        defaultValue={
+                          editingContact?.notificationPreferences?.alertThreshold || "critical"
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        <option value="critical">Critical Risk Only</option>
+                        <option value="high">High Risk and Above</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Notification Methods
+                      </label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="notificationMethods"
+                            value="email"
+                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                              "email"
+                            )}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <label htmlFor="email" className="ml-2 text-sm text-gray-700">
+                            Email
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="notificationMethods"
+                            value="sms"
+                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                              "sms"
+                            )}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <label htmlFor="sms" className="ml-2 text-sm text-gray-700">
+                            SMS
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEmergencyContactForm(false);
+                          setEditingContact(null);
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        {editingContact ? "Update Contact" : "Add Contact"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

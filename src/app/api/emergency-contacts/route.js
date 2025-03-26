@@ -89,42 +89,57 @@ export async function POST(req) {
 
 export async function PUT(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const data = await request.json();
+    const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!id) {
+    const { searchParams } = new URL(request.url);
+    const contactId = searchParams.get("id");
+    if (!contactId) {
       return NextResponse.json({ error: "Contact ID is required" }, { status: 400 });
     }
 
+    const data = await request.json();
     await connectDB();
 
     // Find the existing contact
-    const existingContact = await EmergencyContact.findById(id);
+    const existingContact = await EmergencyContact.findOne({
+      _id: contactId,
+      userId: session.userId,
+    });
+
     if (!existingContact) {
       return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
 
-    // If email is being changed and the contact was verified, reset verification
-    if (data.email !== existingContact.email && existingContact.isVerified) {
+    // Check if email has changed for a verified contact
+    if (existingContact.isVerified && data.email && data.email !== existingContact.email) {
+      // Reset verification status and generate new verification token
       data.isVerified = false;
-      data.verificationToken = Math.random().toString(36).substring(2);
+      data.verificationToken = crypto.randomBytes(32).toString("hex");
       data.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    }
 
-    // Update the contact
-    const updatedContact = await EmergencyContact.findByIdAndUpdate(
-      id,
-      { $set: data },
-      { new: true }
-    );
-
-    // If email was changed and contact was previously verified, send new verification email
-    if (data.email !== existingContact.email && existingContact.isVerified) {
+      // Send verification email
       await sendVerificationEmail(data.email, data.verificationToken);
     }
 
-    return NextResponse.json({ contact: updatedContact });
+    const result = await EmergencyContact.findOneAndUpdate(
+      { _id: contactId, userId: session.userId },
+      {
+        $set: {
+          ...data,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Emergency contact updated successfully",
+      data: result,
+    });
   } catch (error) {
     console.error("Error updating emergency contact:", error);
     return NextResponse.json({ error: "Failed to update emergency contact" }, { status: 500 });
