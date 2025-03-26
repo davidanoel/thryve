@@ -1364,7 +1364,7 @@ export default function Dashboard() {
                                         trend.title.toLowerCase().includes("decrease") ||
                                         trend.title.toLowerCase().includes("worsen") ||
                                         trend.title.toLowerCase().includes("negative") ? (
-                                          <ArrowTrendingDownIcon className="h-6 w-6 text-orange-600" />
+                                          <ArrowTrendingDownIcon className="h-6 w-6 text-red-600" />
                                         ) : (
                                           <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
                                         )}
@@ -1375,9 +1375,16 @@ export default function Dashboard() {
                                         <h5 className="text-base font-medium text-gray-900">
                                           {trend.title}
                                         </h5>
-                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
-                                          {trend.confidence} Confidence
-                                        </span>
+                                        <div className="flex items-center space-x-2">
+                                          {trend.timeframe && (
+                                            <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                              {trend.timeframe}
+                                            </span>
+                                          )}
+                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+                                            {trend.confidence}% Confidence
+                                          </span>
+                                        </div>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
                                         {trend.description}
@@ -1433,13 +1440,37 @@ export default function Dashboard() {
                                         <h5 className="text-base font-medium text-gray-900">
                                           {trigger.title}
                                         </h5>
-                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-orange-50 text-orange-600">
-                                          {trigger.impact} Impact
-                                        </span>
+                                        <div className="flex items-center space-x-2">
+                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-orange-50 text-orange-600">
+                                            {trigger.confidence}% Confidence
+                                          </span>
+                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-red-50 text-red-600">
+                                            {trigger.impact} Impact
+                                          </span>
+                                        </div>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
                                         {trigger.description}
                                       </p>
+                                      {trigger.actionItems && trigger.actionItems.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-100">
+                                          <h6 className="text-sm font-medium text-gray-900 mb-2">
+                                            Action Items:
+                                          </h6>
+                                          <ul className="space-y-2">
+                                            {trigger.actionItems.map((item, idx) => (
+                                              <li key={idx} className="flex items-start">
+                                                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 text-sm font-medium mr-2">
+                                                  {idx + 1}
+                                                </span>
+                                                <span className="text-sm text-gray-600">
+                                                  {item.description}
+                                                </span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1491,23 +1522,52 @@ export default function Dashboard() {
                                         <h5 className="text-base font-medium text-gray-900">
                                           {rec.title}
                                         </h5>
-                                        <span
-                                          className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                            rec.priority === "high"
-                                              ? "bg-red-50 text-red-600"
-                                              : rec.priority === "medium"
-                                                ? "bg-yellow-50 text-yellow-600"
-                                                : "bg-green-50 text-green-600"
-                                          }`}
-                                        >
-                                          {rec.priority.charAt(0).toUpperCase() +
-                                            rec.priority.slice(1)}{" "}
-                                          Priority
-                                        </span>
+                                        <div className="flex items-center space-x-2">
+                                          {rec.timeframe && (
+                                            <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                              {rec.timeframe}
+                                            </span>
+                                          )}
+                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-purple-50 text-purple-600">
+                                            {rec.confidence}% Confidence
+                                          </span>
+                                          <span
+                                            className={`text-sm font-medium px-3 py-1 rounded-full ${
+                                              rec.priority === "high"
+                                                ? "bg-red-50 text-red-600"
+                                                : rec.priority === "medium"
+                                                  ? "bg-yellow-50 text-yellow-600"
+                                                  : "bg-green-50 text-green-600"
+                                            }`}
+                                          >
+                                            {rec.priority.charAt(0).toUpperCase() +
+                                              rec.priority.slice(1)}{" "}
+                                            Priority
+                                          </span>
+                                        </div>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
                                         {rec.description}
                                       </p>
+                                      {rec.actionItems && rec.actionItems.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-100">
+                                          <h6 className="text-sm font-medium text-gray-900 mb-2">
+                                            Action Steps:
+                                          </h6>
+                                          <ul className="space-y-2">
+                                            {rec.actionItems.map((item, idx) => (
+                                              <li key={idx} className="flex items-start">
+                                                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-purple-100 text-purple-600 text-sm font-medium mr-2">
+                                                  {idx + 1}
+                                                </span>
+                                                <span className="text-sm text-gray-600">
+                                                  {item.description}
+                                                </span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1576,16 +1636,39 @@ export default function Dashboard() {
                                           <h5 className="text-base font-medium text-gray-900">
                                             {pred.title}
                                           </h5>
-                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                                            {pred.confidence} Confidence
-                                          </span>
+                                          <div className="flex items-center space-x-2">
+                                            {pred.timeframe && (
+                                              <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                                {pred.timeframe}
+                                              </span>
+                                            )}
+                                            <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                              {pred.confidence}% Confidence
+                                            </span>
+                                          </div>
                                         </div>
                                         <p className="text-gray-600 whitespace-pre-wrap">
                                           {pred.description}
                                         </p>
-                                        <div className="mt-2 text-sm text-gray-500">
-                                          Timeframe: {pred.timeframe}
-                                        </div>
+                                        {pred.actionItems && pred.actionItems.length > 0 && (
+                                          <div className="mt-4 pt-4 border-t border-gray-100">
+                                            <h6 className="text-sm font-medium text-gray-900 mb-2">
+                                              Action Steps:
+                                            </h6>
+                                            <ul className="space-y-2">
+                                              {pred.actionItems.map((item, idx) => (
+                                                <li key={idx} className="flex items-start">
+                                                  <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-sm font-medium mr-2">
+                                                    {idx + 1}
+                                                  </span>
+                                                  <span className="text-sm text-gray-600">
+                                                    {item.description}
+                                                  </span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1635,9 +1718,21 @@ export default function Dashboard() {
                                           </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <h5 className="text-base font-medium text-gray-900 mb-2">
-                                            {pattern.title}
-                                          </h5>
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="text-base font-medium text-gray-900">
+                                              {pattern.title}
+                                            </h5>
+                                            <div className="flex items-center space-x-2">
+                                              {pattern.timeframe && (
+                                                <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                                  {pattern.timeframe}
+                                                </span>
+                                              )}
+                                              <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+                                                {pattern.confidence}% Confidence
+                                              </span>
+                                            </div>
+                                          </div>
                                           <p className="text-gray-600">{pattern.description}</p>
                                           <div className="mt-2 flex items-center space-x-2">
                                             <span className="text-sm text-gray-500">Strength:</span>
@@ -1692,9 +1787,21 @@ export default function Dashboard() {
                                           </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <h5 className="text-base font-medium text-gray-900 mb-2">
-                                            {corr.title}
-                                          </h5>
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="text-base font-medium text-gray-900">
+                                              {corr.title}
+                                            </h5>
+                                            <div className="flex items-center space-x-2">
+                                              {corr.timeframe && (
+                                                <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                                  {corr.timeframe}
+                                                </span>
+                                              )}
+                                              <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
+                                                {corr.confidence}% Confidence
+                                              </span>
+                                            </div>
+                                          </div>
                                           <p className="text-gray-600">{corr.description}</p>
                                           <div className="mt-2 flex items-center space-x-2">
                                             <span className="text-sm text-gray-500">Impact:</span>
@@ -1749,13 +1856,54 @@ export default function Dashboard() {
                                           </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <h5 className="text-base font-medium text-gray-900 mb-2">
-                                            {rec.title}
-                                          </h5>
-                                          <p className="text-gray-600">{rec.description}</p>
-                                          {rec.timeframe && (
-                                            <div className="mt-2 text-sm text-gray-500">
-                                              Timeframe: {rec.timeframe}
+                                          <div className="flex items-center justify-between mb-2">
+                                            <h5 className="text-base font-medium text-gray-900">
+                                              {rec.title}
+                                            </h5>
+                                            <div className="flex items-center space-x-2">
+                                              {rec.timeframe && (
+                                                <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                                  {rec.timeframe}
+                                                </span>
+                                              )}
+                                              <span className="text-sm font-medium px-3 py-1 rounded-full bg-purple-50 text-purple-600">
+                                                {rec.confidence}% Confidence
+                                              </span>
+                                              <span
+                                                className={`text-sm font-medium px-3 py-1 rounded-full ${
+                                                  rec.priority === "high"
+                                                    ? "bg-red-50 text-red-600"
+                                                    : rec.priority === "medium"
+                                                      ? "bg-yellow-50 text-yellow-600"
+                                                      : "bg-green-50 text-green-600"
+                                                }`}
+                                              >
+                                                {rec.priority.charAt(0).toUpperCase() +
+                                                  rec.priority.slice(1)}{" "}
+                                                Priority
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <p className="text-gray-600 whitespace-pre-wrap">
+                                            {rec.description}
+                                          </p>
+                                          {rec.actionItems && rec.actionItems.length > 0 && (
+                                            <div className="mt-4 pt-4 border-t border-gray-100">
+                                              <h6 className="text-sm font-medium text-gray-900 mb-2">
+                                                Action Steps:
+                                              </h6>
+                                              <ul className="space-y-2">
+                                                {rec.actionItems.map((item, idx) => (
+                                                  <li key={idx} className="flex items-start">
+                                                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-purple-100 text-purple-600 text-sm font-medium mr-2">
+                                                      {idx + 1}
+                                                    </span>
+                                                    <span className="text-sm text-gray-600">
+                                                      {item.description}
+                                                    </span>
+                                                  </li>
+                                                ))}
+                                              </ul>
                                             </div>
                                           )}
                                         </div>

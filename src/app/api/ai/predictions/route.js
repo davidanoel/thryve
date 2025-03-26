@@ -47,11 +47,11 @@ export async function GET() {
         {
           role: "system",
           content:
-            "You are a mental health and wellness AI expert specializing in pattern recognition and predictive analysis. Analyze the user's mood patterns over the last 30 days to identify long-term trends, seasonal patterns, and potential future developments. Focus on deeper correlations and predictive insights. Prioritize high-impact patterns and significant predictions. Format your response as a JSON object with the following structure: { predictions: [{ title, description, confidence, timeframe, priority }], patterns: [{ title, description, type, strength, priority }], correlations: [{ title, description, impact, confidence, priority }], recommendations: [{ title, description, timeframe, priority }] }. Sort items within each category by priority (high, medium, low).",
+            "You are a mental health and wellness AI assistant. Analyze the user's mood patterns (last 30 days) and provide structured predictions and recommendations. Focus on identifying long-term trends, patterns, and suggesting evidence-based strategies for improving mental well-being. Prioritize high-impact items and urgent recommendations. Format your response as a JSON object with the following structure: { predictions: [{ title, description, confidence, timeframe, actionItems: [{ step, description }] }], patterns: [{ title, description, type, strength, confidence, timeframe }], correlations: [{ title, description, impact, confidence, timeframe }], recommendations: [{ title, description, priority, category, confidence, timeframe, actionItems: [{ step, description }] }] }. Sort items within each category by priority (high, medium, low). For confidence scores, use a number between 0-100. For timeframes, specify when the prediction is most relevant (e.g., 'next week', 'next month', 'next 3 months'). For action items, provide 2-3 specific, actionable steps. For strength and impact, use descriptive terms (e.g., 'strong', 'moderate', 'weak').",
         },
         {
           role: "user",
-          content: `Please analyze this 30-day mood data and provide predictive insights: ${JSON.stringify(
+          content: `Please analyze this mood data and provide structured predictions: ${JSON.stringify(
             moodData
           )}`,
         },
@@ -98,7 +98,7 @@ export async function GET() {
         parsedResponse.patterns.map((pattern) => ({
           ...pattern,
           type: "pattern",
-          icon: "chart-bar",
+          icon: "chart",
           color: "blue",
           category: "Long-term Patterns",
         }))
