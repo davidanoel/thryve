@@ -64,7 +64,9 @@ export async function GET() {
     const aiResponse = completion.choices[0].message.content;
     let parsedResponse;
     try {
-      parsedResponse = JSON.parse(aiResponse);
+      // Clean up the response by removing markdown code block formatting
+      const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, "").trim();
+      parsedResponse = JSON.parse(cleanedResponse);
     } catch (error) {
       console.error("Error parsing AI response:", error);
       parsedResponse = {

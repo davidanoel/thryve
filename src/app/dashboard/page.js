@@ -1360,7 +1360,14 @@ export default function Dashboard() {
                                   <div className="flex items-start space-x-4">
                                     <div className="flex-shrink-0">
                                       <div className="p-2 bg-blue-50 rounded-lg">
-                                        <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
+                                        {trend.title.toLowerCase().includes("decline") ||
+                                        trend.title.toLowerCase().includes("decrease") ||
+                                        trend.title.toLowerCase().includes("worsen") ||
+                                        trend.title.toLowerCase().includes("negative") ? (
+                                          <ArrowTrendingDownIcon className="h-6 w-6 text-orange-600" />
+                                        ) : (
+                                          <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
+                                        )}
                                       </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -1369,7 +1376,7 @@ export default function Dashboard() {
                                           {trend.title}
                                         </h5>
                                         <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
-                                          {trend.confidence}% Confidence
+                                          {trend.confidence} Confidence
                                         </span>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
@@ -1570,7 +1577,7 @@ export default function Dashboard() {
                                             {pred.title}
                                           </h5>
                                           <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                                            {pred.confidence}% Confidence
+                                            {pred.confidence} Confidence
                                           </span>
                                         </div>
                                         <p className="text-gray-600 whitespace-pre-wrap">
