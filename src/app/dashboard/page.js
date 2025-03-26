@@ -43,6 +43,7 @@ import {
   GlobeAltIcon,
   ArrowDownTrayIcon,
   LinkIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 
@@ -126,6 +127,25 @@ export default function Dashboard() {
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [isLoadingRisk, setIsLoadingRisk] = useState(false);
   const [activeInsightTab, setActiveInsightTab] = useState("all");
+  const [expandedSections, setExpandedSections] = useState({
+    predictions: true, // Future Predictions expanded by default
+    patterns: false,
+    correlations: false,
+    recommendations: false,
+    trends: true, // Recent Insights sections expanded by default
+    triggers: true,
+    insightsRecommendations: true,
+    riskFactors: false,
+    highRiskAlert: false,
+    emergencyContacts: false,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   // Initial data load
   useEffect(() => {
@@ -902,6 +922,325 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
+
+            {/* Emergency Contacts Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <PhoneIcon className="h-6 w-6 text-red-500" />
+                  Emergency Contacts
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditingContact(null);
+                    setShowEmergencyContactForm(true);
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <PlusIcon className="h-5 w-5 mr-1" />
+                  Add Contact
+                </button>
+              </div>
+
+              {isLoadingContacts ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
+                </div>
+              ) : emergencyContacts.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No emergency contacts added yet.</p>
+              ) : (
+                <div className="space-y-6">
+                  {/* Summary Section - Always Visible */}
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="h-12 w-12 rounded-full flex items-center justify-center bg-red-100">
+                          <PhoneIcon className="h-6 w-6 text-red-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-500">Emergency Contacts</div>
+                          <div className="text-lg font-medium">
+                            {emergencyContacts.length} contacts
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">Verified Contacts</div>
+                        <div className="text-lg font-medium">
+                          {emergencyContacts.filter((c) => c.isVerified).length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contacts List - Collapsible */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleSection("emergencyContacts")}
+                      className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <UserGroupIcon className="h-5 w-5 text-red-500 mr-2" />
+                        <h4 className="text-base font-medium text-gray-900">Contact List</h4>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-red-600 font-medium">
+                          {emergencyContacts.length} contacts
+                        </span>
+                        <ChevronDownIcon
+                          className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                            expandedSections.emergencyContacts ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {expandedSections.emergencyContacts && (
+                      <div className="p-4 bg-gray-50 space-y-4">
+                        {emergencyContacts.map((contact) => (
+                          <div
+                            key={contact._id}
+                            className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <h3 className="font-semibold text-gray-900">{contact.name}</h3>
+                                  {!contact.isVerified && (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-50 text-yellow-600">
+                                      Unverified
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{contact.relationship}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingContact(contact);
+                                    setShowEmergencyContactForm(true);
+                                  }}
+                                  className="text-gray-400 hover:text-indigo-600 transition-colors"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteEmergencyContact(contact._id)}
+                                  className="text-gray-400 hover:text-red-600 transition-colors"
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-3 space-y-2">
+                              <div className="flex items-center text-sm text-gray-600">
+                                <PhoneIcon className="h-4 w-4 mr-2" />
+                                {contact.phone}
+                              </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <EnvelopeIcon className="h-4 w-4 mr-2" />
+                                {contact.email}
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <div>
+                                  <span className="font-medium">Alert Threshold:</span>{" "}
+                                  {contact.notificationPreferences.alertThreshold}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Notifications:</span>{" "}
+                                  {contact.notificationPreferences.methods.join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Emergency Contact Form Modal */}
+            {showEmergencyContactForm && (
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg max-w-md w-full p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">
+                      {editingContact ? "Edit Emergency Contact" : "Add Emergency Contact"}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowEmergencyContactForm(false);
+                        setEditingContact(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-500"
+                    >
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.target);
+                      const contactData = {
+                        name: formData.get("name"),
+                        relationship: formData.get("relationship"),
+                        phone: formData.get("phone"),
+                        email: formData.get("email"),
+                        notificationPreferences: {
+                          alertThreshold: formData.get("alertThreshold"),
+                          methods: Array.from(formData.getAll("notificationMethods")),
+                        },
+                      };
+
+                      if (editingContact) {
+                        handleEditEmergencyContact(contactData);
+                      } else {
+                        handleAddEmergencyContact(contactData);
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        required
+                        defaultValue={editingContact?.name}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="relationship"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Relationship
+                      </label>
+                      <input
+                        type="text"
+                        name="relationship"
+                        id="relationship"
+                        required
+                        defaultValue={editingContact?.relationship}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        required
+                        defaultValue={editingContact?.phone}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        required
+                        defaultValue={editingContact?.email}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="alertThreshold"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Alert Threshold
+                      </label>
+                      <select
+                        name="alertThreshold"
+                        id="alertThreshold"
+                        defaultValue={
+                          editingContact?.notificationPreferences?.alertThreshold || "critical"
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      >
+                        <option value="critical">Critical Risk Only</option>
+                        <option value="high">High Risk and Above</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Notification Methods
+                      </label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="notificationMethods"
+                            value="email"
+                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                              "email"
+                            )}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <label htmlFor="email" className="ml-2 text-sm text-gray-700">
+                            Email
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="notificationMethods"
+                            value="sms"
+                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                              "sms"
+                            )}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <label htmlFor="sms" className="ml-2 text-sm text-gray-700">
+                            SMS
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEmergencyContactForm(false);
+                          setEditingContact(null);
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      >
+                        {editingContact ? "Update Contact" : "Add Contact"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column */}
@@ -977,8 +1316,8 @@ export default function Dashboard() {
                   {(activeInsightTab === "all" || activeInsightTab === "insights") && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                          <ClockIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center bg-indigo-50 px-4 py-2 rounded-lg">
+                          <ClockIcon className="h-5 w-5 text-indigo-600 mr-2" />
                           Recent Insights (Last 7 Days)
                         </h3>
                         <span className="text-sm text-gray-500">
@@ -987,285 +1326,152 @@ export default function Dashboard() {
                         </span>
                       </div>
 
-                      {/* Trends */}
+                      {/* Trends Section */}
                       {insights.trends.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                            <ArrowTrendingUpIcon className="h-5 w-5 text-blue-500 mr-2" />
-                            Trend Analysis
-                          </h4>
-                          <div className="space-y-4">
-                            {insights.trends.map((trend, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
-                              >
-                                <div className="flex items-start space-x-4">
-                                  <div className="flex-shrink-0">
-                                    <div className="p-2 bg-blue-50 rounded-lg">
-                                      <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <h5 className="text-base font-medium text-gray-900">
-                                        {trend.title}
-                                      </h5>
-                                      <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
-                                        {trend.confidence}% Confidence
-                                      </span>
-                                    </div>
-                                    <p className="text-gray-600 whitespace-pre-wrap">
-                                      {trend.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Triggers */}
-                      {insights.triggers.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                            <BoltIcon className="h-5 w-5 text-orange-500 mr-2" />
-                            Identified Triggers
-                          </h4>
-                          <div className="space-y-4">
-                            {insights.triggers.map((trigger, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
-                              >
-                                <div className="flex items-start space-x-4">
-                                  <div className="flex-shrink-0">
-                                    <div className="p-2 bg-orange-50 rounded-lg">
-                                      <BoltIcon className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <h5 className="text-base font-medium text-gray-900">
-                                        {trigger.title}
-                                      </h5>
-                                      <span className="text-sm font-medium px-3 py-1 rounded-full bg-orange-50 text-orange-600">
-                                        {trigger.impact} Impact
-                                      </span>
-                                    </div>
-                                    <p className="text-gray-600 whitespace-pre-wrap">
-                                      {trigger.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Immediate Recommendations */}
-                      {insights.recommendations.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                            <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
-                            Immediate Recommendations
-                          </h4>
-                          <div className="space-y-4">
-                            {insights.recommendations.map((rec, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
-                              >
-                                <div className="flex items-start space-x-4">
-                                  <div className="flex-shrink-0">
-                                    <div className="p-2 bg-purple-50 rounded-lg">
-                                      <SparklesIcon className="h-6 w-6 text-purple-600" />
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <h5 className="text-base font-medium text-gray-900">
-                                        {rec.title}
-                                      </h5>
-                                      <span
-                                        className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                          rec.priority === "high"
-                                            ? "bg-red-50 text-red-600"
-                                            : rec.priority === "medium"
-                                              ? "bg-yellow-50 text-yellow-600"
-                                              : "bg-green-50 text-green-600"
-                                        }`}
-                                      >
-                                        {rec.priority.charAt(0).toUpperCase() +
-                                          rec.priority.slice(1)}{" "}
-                                        Priority
-                                      </span>
-                                    </div>
-                                    <p className="text-gray-600 whitespace-pre-wrap">
-                                      {rec.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Long-term Predictions Section (30 days) */}
-                  {(activeInsightTab === "all" || activeInsightTab === "predictions") &&
-                    predictions && (
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                            <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
-                            Long-term Predictions (Last 30 Days)
-                          </h3>
-                          <span className="text-sm text-gray-500">
-                            {new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString()} -{" "}
-                            {new Date().toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        {/* Future Predictions */}
-                        {predictions.predictions.length > 0 && (
-                          <div className="mb-6">
-                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                              <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
-                              Future Predictions
-                            </h4>
-                            <div className="space-y-4">
-                              {predictions.predictions.map((pred, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
-                                >
-                                  <div className="flex items-start space-x-4">
-                                    <div className="flex-shrink-0">
-                                      <div className="p-2 bg-indigo-50 rounded-lg">
-                                        <ChartBarIcon className="h-6 w-6 text-indigo-600" />
-                                      </div>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between mb-2">
-                                        <h5 className="text-base font-medium text-gray-900">
-                                          {pred.title}
-                                        </h5>
-                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                                          {pred.confidence}% Confidence
-                                        </span>
-                                      </div>
-                                      <p className="text-gray-600 whitespace-pre-wrap">
-                                        {pred.description}
-                                      </p>
-                                      <div className="mt-2 text-sm text-gray-500">
-                                        Timeframe: {pred.timeframe}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                        <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
+                          <button
+                            onClick={() => toggleSection("trends")}
+                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center">
+                              <ArrowTrendingUpIcon className="h-5 w-5 text-blue-500 mr-2" />
+                              <h4 className="text-base font-medium text-gray-900">
+                                Trend Analysis
+                              </h4>
                             </div>
-                          </div>
-                        )}
-
-                        {/* Long-term Patterns */}
-                        {predictions.patterns.length > 0 && (
-                          <div className="mb-6">
-                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                              <ChartBarIcon className="h-5 w-5 text-blue-500 mr-2" />
-                              Long-term Patterns
-                            </h4>
-                            <div className="space-y-4">
-                              {predictions.patterns.map((pattern, index) => (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-blue-600 font-medium">
+                                {insights.trends.length} trends
+                              </span>
+                              <ChevronDownIcon
+                                className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                  expandedSections.trends ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </button>
+                          {expandedSections.trends && (
+                            <div className="p-4 bg-gray-50 space-y-4">
+                              {insights.trends.map((trend, index) => (
                                 <div
                                   key={index}
-                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                  className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
                                 >
                                   <div className="flex items-start space-x-4">
                                     <div className="flex-shrink-0">
                                       <div className="p-2 bg-blue-50 rounded-lg">
-                                        <ChartBarIcon className="h-6 w-6 text-blue-600" />
+                                        <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
                                       </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-2">
                                         <h5 className="text-base font-medium text-gray-900">
-                                          {pattern.title}
+                                          {trend.title}
                                         </h5>
                                         <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
-                                          {pattern.strength} Strength
+                                          {trend.confidence}% Confidence
                                         </span>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
-                                        {pattern.description}
+                                        {trend.description}
                                       </p>
                                     </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
 
-                        {/* Key Correlations */}
-                        {predictions.correlations.length > 0 && (
-                          <div className="mb-6">
-                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
-                              <LinkIcon className="h-5 w-5 text-green-500 mr-2" />
-                              Key Correlations
-                            </h4>
-                            <div className="space-y-4">
-                              {predictions.correlations.map((corr, index) => (
+                      {/* Triggers Section */}
+                      {insights.triggers.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
+                          <button
+                            onClick={() => toggleSection("triggers")}
+                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center">
+                              <BoltIcon className="h-5 w-5 text-orange-500 mr-2" />
+                              <h4 className="text-base font-medium text-gray-900">
+                                Identified Triggers
+                              </h4>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-orange-600 font-medium">
+                                {insights.triggers.length} triggers
+                              </span>
+                              <ChevronDownIcon
+                                className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                  expandedSections.triggers ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </button>
+                          {expandedSections.triggers && (
+                            <div className="p-4 bg-gray-50 space-y-4">
+                              {insights.triggers.map((trigger, index) => (
                                 <div
                                   key={index}
-                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                  className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
                                 >
                                   <div className="flex items-start space-x-4">
                                     <div className="flex-shrink-0">
-                                      <div className="p-2 bg-green-50 rounded-lg">
-                                        <LinkIcon className="h-6 w-6 text-green-600" />
+                                      <div className="p-2 bg-orange-50 rounded-lg">
+                                        <BoltIcon className="h-6 w-6 text-orange-600" />
                                       </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-2">
                                         <h5 className="text-base font-medium text-gray-900">
-                                          {corr.title}
+                                          {trigger.title}
                                         </h5>
-                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
-                                          {corr.impact} Impact
+                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-orange-50 text-orange-600">
+                                          {trigger.impact} Impact
                                         </span>
                                       </div>
                                       <p className="text-gray-600 whitespace-pre-wrap">
-                                        {corr.description}
+                                        {trigger.description}
                                       </p>
-                                      <div className="mt-2 text-sm text-gray-500">
-                                        Confidence: {corr.confidence}%
-                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
 
-                        {/* Strategic Recommendations */}
-                        {predictions.recommendations.length > 0 && (
-                          <div className="mb-6">
-                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                      {/* Recommendations Section */}
+                      {insights.recommendations.length > 0 && (
+                        <div className="border border-gray-200 rounded-xl overflow-hidden">
+                          <button
+                            onClick={() => toggleSection("recommendations")}
+                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center">
                               <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
-                              Strategic Recommendations
-                            </h4>
-                            <div className="space-y-4">
-                              {predictions.recommendations.map((rec, index) => (
+                              <h4 className="text-base font-medium text-gray-900">
+                                Immediate Recommendations
+                              </h4>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-purple-600 font-medium">
+                                {insights.recommendations.length} recommendations
+                              </span>
+                              <ChevronDownIcon
+                                className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                  expandedSections.recommendations ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </button>
+                          {expandedSections.recommendations && (
+                            <div className="p-4 bg-gray-50 space-y-4">
+                              {insights.recommendations.map((rec, index) => (
                                 <div
                                   key={index}
-                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                  className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
                                 >
                                   <div className="flex items-start space-x-4">
                                     <div className="flex-shrink-0">
@@ -1295,16 +1501,265 @@ export default function Dashboard() {
                                       <p className="text-gray-600 whitespace-pre-wrap">
                                         {rec.description}
                                       </p>
-                                      <div className="mt-2 text-sm text-gray-500">
-                                        Timeframe: {rec.timeframe}
-                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               ))}
                             </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Long-term Predictions Section (30 days) */}
+                  {(activeInsightTab === "all" || activeInsightTab === "predictions") &&
+                    predictions && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center bg-indigo-50 px-4 py-2 rounded-lg">
+                            <ChartBarIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                            Long-term Predictions (Last 30 Days)
+                          </h3>
+                          <span className="text-sm text-gray-500">
+                            {new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString()} -{" "}
+                            {new Date().toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {/* Future Predictions - Collapsible but expanded by default */}
+                        {predictions.predictions.length > 0 && (
+                          <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
+                            <button
+                              onClick={() => toggleSection("predictions")}
+                              className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center">
+                                <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                                <h4 className="text-base font-medium text-gray-900">
+                                  Future Predictions
+                                </h4>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-indigo-600 font-medium">
+                                  {predictions.predictions.length} predictions
+                                </span>
+                                <ChevronDownIcon
+                                  className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                    expandedSections.predictions ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </div>
+                            </button>
+                            {expandedSections.predictions && (
+                              <div className="p-4 bg-gray-50 space-y-4">
+                                {predictions.predictions.map((pred, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                  >
+                                    <div className="flex items-start space-x-4">
+                                      <div className="flex-shrink-0">
+                                        <div className="p-2 bg-indigo-50 rounded-lg">
+                                          <ChartBarIcon className="h-6 w-6 text-indigo-600" />
+                                        </div>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <h5 className="text-base font-medium text-gray-900">
+                                            {pred.title}
+                                          </h5>
+                                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                            {pred.confidence}% Confidence
+                                          </span>
+                                        </div>
+                                        <p className="text-gray-600 whitespace-pre-wrap">
+                                          {pred.description}
+                                        </p>
+                                        <div className="mt-2 text-sm text-gray-500">
+                                          Timeframe: {pred.timeframe}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
+
+                        {/* Other Sections - Collapsible */}
+                        <div className="space-y-4">
+                          {/* Long-term Patterns */}
+                          {predictions.patterns.length > 0 && (
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                              <button
+                                onClick={() => toggleSection("patterns")}
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex items-center">
+                                  <ChartBarIcon className="h-5 w-5 text-blue-500 mr-2" />
+                                  <h4 className="text-base font-medium text-gray-900">
+                                    Long-term Patterns
+                                  </h4>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-blue-600 font-medium">
+                                    {predictions.patterns.length} patterns
+                                  </span>
+                                  <ChevronDownIcon
+                                    className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                      expandedSections.patterns ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </button>
+                              {expandedSections.patterns && (
+                                <div className="p-4 bg-gray-50 space-y-4">
+                                  {predictions.patterns.map((pattern, index) => (
+                                    <div
+                                      key={index}
+                                      className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                    >
+                                      <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0">
+                                          <div className="p-2 bg-blue-50 rounded-lg">
+                                            <ChartBarIcon className="h-6 w-6 text-blue-600" />
+                                          </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h5 className="text-base font-medium text-gray-900 mb-2">
+                                            {pattern.title}
+                                          </h5>
+                                          <p className="text-gray-600">{pattern.description}</p>
+                                          <div className="mt-2 flex items-center space-x-2">
+                                            <span className="text-sm text-gray-500">Strength:</span>
+                                            <span className="text-sm font-medium text-blue-600">
+                                              {pattern.strength}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Key Correlations */}
+                          {predictions.correlations.length > 0 && (
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                              <button
+                                onClick={() => toggleSection("correlations")}
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex items-center">
+                                  <LinkIcon className="h-5 w-5 text-green-500 mr-2" />
+                                  <h4 className="text-base font-medium text-gray-900">
+                                    Key Correlations
+                                  </h4>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-green-600 font-medium">
+                                    {predictions.correlations.length} correlations
+                                  </span>
+                                  <ChevronDownIcon
+                                    className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                      expandedSections.correlations ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </button>
+                              {expandedSections.correlations && (
+                                <div className="p-4 bg-gray-50 space-y-4">
+                                  {predictions.correlations.map((corr, index) => (
+                                    <div
+                                      key={index}
+                                      className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                    >
+                                      <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0">
+                                          <div className="p-2 bg-green-50 rounded-lg">
+                                            <LinkIcon className="h-6 w-6 text-green-600" />
+                                          </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h5 className="text-base font-medium text-gray-900 mb-2">
+                                            {corr.title}
+                                          </h5>
+                                          <p className="text-gray-600">{corr.description}</p>
+                                          <div className="mt-2 flex items-center space-x-2">
+                                            <span className="text-sm text-gray-500">Impact:</span>
+                                            <span className="text-sm font-medium text-green-600">
+                                              {corr.impact}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Strategic Recommendations */}
+                          {predictions.recommendations.length > 0 && (
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                              <button
+                                onClick={() => toggleSection("recommendations")}
+                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex items-center">
+                                  <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
+                                  <h4 className="text-base font-medium text-gray-900">
+                                    Strategic Recommendations
+                                  </h4>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-purple-600 font-medium">
+                                    {predictions.recommendations.length} recommendations
+                                  </span>
+                                  <ChevronDownIcon
+                                    className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                                      expandedSections.recommendations ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </button>
+                              {expandedSections.recommendations && (
+                                <div className="p-4 bg-gray-50 space-y-4">
+                                  {predictions.recommendations.map((rec, index) => (
+                                    <div
+                                      key={index}
+                                      className="bg-white rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                    >
+                                      <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0">
+                                          <div className="p-2 bg-purple-50 rounded-lg">
+                                            <SparklesIcon className="h-6 w-6 text-purple-600" />
+                                          </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h5 className="text-base font-medium text-gray-900 mb-2">
+                                            {rec.title}
+                                          </h5>
+                                          <p className="text-gray-600">{rec.description}</p>
+                                          {rec.timeframe && (
+                                            <div className="mt-2 text-sm text-gray-500">
+                                              Timeframe: {rec.timeframe}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                 </div>
@@ -1668,10 +2123,12 @@ export default function Dashboard() {
 
             {/* Risk Assessment Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
-                <ShieldExclamationIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                Risk Assessment
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold flex items-center">
+                  <ShieldExclamationIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                  Risk Assessment
+                </h2>
+              </div>
 
               {isLoadingRisk ? (
                 <div className="flex flex-col items-center justify-center py-12">
@@ -1699,131 +2156,181 @@ export default function Dashboard() {
                 </div>
               ) : riskAssessment ? (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                          riskAssessment.riskLevel === "critical"
-                            ? "bg-red-100"
-                            : riskAssessment.riskLevel === "high"
-                              ? "bg-orange-100"
-                              : riskAssessment.riskLevel === "medium"
-                                ? "bg-yellow-100"
-                                : "bg-green-100"
-                        }`}
-                      >
-                        <ShieldExclamationIcon
-                          className={`h-6 w-6 ${
+                  {/* Always visible risk level and score */}
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div
+                          className={`h-12 w-12 rounded-full flex items-center justify-center ${
                             riskAssessment.riskLevel === "critical"
-                              ? "text-red-600"
+                              ? "bg-red-100"
                               : riskAssessment.riskLevel === "high"
-                                ? "text-orange-600"
+                                ? "bg-orange-100"
                                 : riskAssessment.riskLevel === "medium"
-                                  ? "text-yellow-600"
-                                  : "text-green-600"
+                                  ? "bg-yellow-100"
+                                  : "bg-green-100"
                           }`}
-                        />
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Current Risk Level</div>
-                        <div className="text-lg font-medium capitalize">
-                          {riskAssessment.riskLevel}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-500">Risk Score</div>
-                      <div className="text-lg font-medium">{riskAssessment.score.toFixed(1)}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {riskAssessment.factors.map((factor, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">{factor.name}</span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                factor.type === "mood"
-                                  ? "bg-purple-100 text-purple-600"
-                                  : factor.type === "language"
-                                    ? "bg-blue-100 text-blue-600"
-                                    : factor.type === "sleep"
-                                      ? "bg-indigo-100 text-indigo-600"
-                                      : factor.type === "social"
-                                        ? "bg-green-100 text-green-600"
-                                        : "bg-orange-100 text-orange-600"
-                              }`}
-                            >
-                              {factor.type}
-                            </span>
-                          </div>
-                          <span
-                            className={`text-sm font-medium ${
-                              factor.score >= 75
+                        >
+                          <ShieldExclamationIcon
+                            className={`h-6 w-6 ${
+                              riskAssessment.riskLevel === "critical"
                                 ? "text-red-600"
-                                : factor.score >= 50
+                                : riskAssessment.riskLevel === "high"
                                   ? "text-orange-600"
-                                  : factor.score >= 25
+                                  : riskAssessment.riskLevel === "medium"
                                     ? "text-yellow-600"
                                     : "text-green-600"
                             }`}
-                          >
-                            {factor.score.toFixed(1)}
-                          </span>
+                          />
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              factor.score >= 75
-                                ? "bg-red-600"
-                                : factor.score >= 50
-                                  ? "bg-orange-600"
-                                  : factor.score >= 25
-                                    ? "bg-yellow-600"
-                                    : "bg-green-600"
-                            }`}
-                            style={{ width: `${factor.score}%` }}
-                          ></div>
-                        </div>
-                        {factor.description && (
-                          <p className="text-sm text-gray-600 mt-2">{factor.description}</p>
-                        )}
-                        {factor.concerns && factor.concerns.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-sm text-gray-600 font-medium mb-1">Key Concerns:</p>
-                            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                              {factor.concerns.map((concern, i) => (
-                                <li key={i}>{concern}</li>
-                              ))}
-                            </ul>
+                        <div>
+                          <div className="text-sm text-gray-500">Current Risk Level</div>
+                          <div className="text-lg font-medium capitalize">
+                            {riskAssessment.riskLevel}
                           </div>
-                        )}
+                        </div>
                       </div>
-                    ))}
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">Risk Score</div>
+                        <div className="text-lg font-medium">{riskAssessment.score.toFixed(1)}</div>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Risk Factors Section - Collapsible */}
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleSection("riskFactors")}
+                      className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-orange-500 mr-2" />
+                        <h4 className="text-base font-medium text-gray-900">Risk Factors</h4>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-orange-600 font-medium">
+                          {riskAssessment.factors.length} factors
+                        </span>
+                        <ChevronDownIcon
+                          className={`h-5 w-5 text-gray-400 transform transition-transform ${
+                            expandedSections.riskFactors ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {expandedSections.riskFactors && (
+                      <div className="p-4 bg-gray-50 space-y-4">
+                        {riskAssessment.factors.map((factor, index) => (
+                          <div key={index} className="bg-white rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm font-medium">{factor.name}</span>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full ${
+                                    factor.type === "mood"
+                                      ? "bg-purple-100 text-purple-600"
+                                      : factor.type === "language"
+                                        ? "bg-blue-100 text-blue-600"
+                                        : factor.type === "sleep"
+                                          ? "bg-indigo-100 text-indigo-600"
+                                          : factor.type === "social"
+                                            ? "bg-green-100 text-green-600"
+                                            : "bg-orange-100 text-orange-600"
+                                  }`}
+                                >
+                                  {factor.type}
+                                </span>
+                              </div>
+                              <span
+                                className={`text-sm font-medium ${
+                                  factor.score >= 75
+                                    ? "text-red-600"
+                                    : factor.score >= 50
+                                      ? "text-orange-600"
+                                      : factor.score >= 25
+                                        ? "text-yellow-600"
+                                        : "text-green-600"
+                                }`}
+                              >
+                                {factor.score.toFixed(1)}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                              <div
+                                className={`h-2 rounded-full transition-all duration-500 ${
+                                  factor.score >= 75
+                                    ? "bg-red-600"
+                                    : factor.score >= 50
+                                      ? "bg-orange-600"
+                                      : factor.score >= 25
+                                        ? "bg-yellow-600"
+                                        : "bg-green-600"
+                                }`}
+                                style={{ width: `${factor.score}%` }}
+                              ></div>
+                            </div>
+                            {factor.description && (
+                              <p className="text-sm text-gray-600 mt-2">{factor.description}</p>
+                            )}
+                            {factor.concerns && factor.concerns.length > 0 && (
+                              <div className="mt-3">
+                                <p className="text-sm text-gray-600 font-medium mb-1">
+                                  Key Concerns:
+                                </p>
+                                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                  {factor.concerns.map((concern, i) => (
+                                    <li key={i}>{concern}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* High Risk Alert Section - Collapsible */}
                   {(riskAssessment.riskLevel === "high" ||
                     riskAssessment.riskLevel === "critical") && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
-                      <div className="flex items-start">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mt-0.5" />
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-red-800">High Risk Alert</h3>
-                          <div className="mt-2 text-sm text-red-700">
-                            <p>
-                              Your current risk level is {riskAssessment.riskLevel}. We strongly
-                              recommend:
-                            </p>
-                            <ul className="list-disc list-inside mt-2">
-                              <li>Reaching out to your emergency contacts</li>
-                              <li>Contacting a mental health professional</li>
-                              <li>Using available crisis resources</li>
-                            </ul>
+                    <div className="border border-red-200 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => toggleSection("highRiskAlert")}
+                        className="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 transition-colors"
+                      >
+                        <div className="flex items-center">
+                          <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-2" />
+                          <h4 className="text-base font-medium text-red-800">High Risk Alert</h4>
+                        </div>
+                        <ChevronDownIcon
+                          className={`h-5 w-5 text-red-400 transform transition-transform ${
+                            expandedSections.highRiskAlert ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {expandedSections.highRiskAlert && (
+                        <div className="p-4 bg-red-50">
+                          <div className="flex items-start">
+                            <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mt-0.5" />
+                            <div className="ml-3">
+                              <h3 className="text-sm font-medium text-red-800">
+                                Immediate Action Required
+                              </h3>
+                              <div className="mt-2 text-sm text-red-700">
+                                <p>
+                                  Your current risk level is {riskAssessment.riskLevel}. We strongly
+                                  recommend:
+                                </p>
+                                <ul className="list-disc list-inside mt-2 space-y-1">
+                                  <li>Reaching out to your emergency contacts</li>
+                                  <li>Contacting a mental health professional</li>
+                                  <li>Using available crisis resources</li>
+                                </ul>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1834,266 +2341,6 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
-            {/* Emergency Contacts Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <PhoneIcon className="h-6 w-6 text-red-500" />
-                  Emergency Contacts
-                </h2>
-                <button
-                  onClick={() => {
-                    setEditingContact(null);
-                    setShowEmergencyContactForm(true);
-                  }}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  <PlusIcon className="h-5 w-5 mr-1" />
-                  Add Contact
-                </button>
-              </div>
-
-              {isLoadingContacts ? (
-                <div className="flex justify-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
-                </div>
-              ) : emergencyContacts.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No emergency contacts added yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {emergencyContacts.map((contact) => (
-                    <div
-                      key={contact._id}
-                      className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold">{contact.name}</h3>
-                          <p className="text-gray-600 text-sm">{contact.relationship}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingContact(contact);
-                              setShowEmergencyContactForm(true);
-                            }}
-                            className="text-gray-400 hover:text-indigo-600"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmergencyContact(contact._id)}
-                            className="text-gray-400 hover:text-red-600"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-2 space-y-1">
-                        <p className="text-sm text-gray-600">
-                          <PhoneIcon className="inline-block h-4 w-4 mr-1" />
-                          {contact.phone}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <EnvelopeIcon className="inline-block h-4 w-4 mr-1" />
-                          {contact.email}
-                          {!contact.isVerified && (
-                            <span className="ml-2 text-xs text-red-500">(Unverified)</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="mt-3 text-xs text-gray-500">
-                        <p>Alert Threshold: {contact.notificationPreferences.alertThreshold}</p>
-                        <p>
-                          Notification Methods: {contact.notificationPreferences.methods.join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Emergency Contact Form Modal */}
-            {showEmergencyContactForm && (
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg max-w-md w-full p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium">
-                      {editingContact ? "Edit Emergency Contact" : "Add Emergency Contact"}
-                    </h3>
-                    <button
-                      onClick={() => {
-                        setShowEmergencyContactForm(false);
-                        setEditingContact(null);
-                      }}
-                      className="text-gray-400 hover:text-gray-500"
-                    >
-                      <XMarkIcon className="h-6 w-6" />
-                    </button>
-                  </div>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const formData = new FormData(e.target);
-                      const contactData = {
-                        name: formData.get("name"),
-                        relationship: formData.get("relationship"),
-                        phone: formData.get("phone"),
-                        email: formData.get("email"),
-                        notificationPreferences: {
-                          alertThreshold: formData.get("alertThreshold"),
-                          methods: Array.from(formData.getAll("notificationMethods")),
-                        },
-                      };
-
-                      if (editingContact) {
-                        handleEditEmergencyContact(contactData);
-                      } else {
-                        handleAddEmergencyContact(contactData);
-                      }
-                    }}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Name
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        id="name"
-                        required
-                        defaultValue={editingContact?.name}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="relationship"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Relationship
-                      </label>
-                      <input
-                        type="text"
-                        name="relationship"
-                        id="relationship"
-                        required
-                        defaultValue={editingContact?.relationship}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        id="phone"
-                        required
-                        defaultValue={editingContact?.phone}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        required
-                        defaultValue={editingContact?.email}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="alertThreshold"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Alert Threshold
-                      </label>
-                      <select
-                        name="alertThreshold"
-                        id="alertThreshold"
-                        defaultValue={
-                          editingContact?.notificationPreferences?.alertThreshold || "critical"
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="critical">Critical Risk Only</option>
-                        <option value="high">High Risk and Above</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Notification Methods
-                      </label>
-                      <div className="mt-2 space-y-2">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="notificationMethods"
-                            value="email"
-                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
-                              "email"
-                            )}
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label htmlFor="email" className="ml-2 text-sm text-gray-700">
-                            Email
-                          </label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="notificationMethods"
-                            value="sms"
-                            defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
-                              "sms"
-                            )}
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                          />
-                          <label htmlFor="sms" className="ml-2 text-sm text-gray-700">
-                            SMS
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end space-x-3 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowEmergencyContactForm(false);
-                          setEditingContact(null);
-                        }}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      >
-                        {editingContact ? "Update Contact" : "Add Contact"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
           </div>
         </div>
         {/* Add this button in the bottom-right corner of the dashboard */}

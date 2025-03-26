@@ -38,7 +38,7 @@ async function analyzeLanguage(text) {
         {
           role: "system",
           content:
-            'You are a mental health risk assessment AI. Analyze the provided text for signs of suicidal ideation, self-harm, depression, anxiety, social isolation, and hopelessness. Respond with a JSON object containing a risk score (0-100), array of concerns, and explanation. Do not include any markdown formatting or code blocks in your response. Example response format: {"score": 25, "concerns": ["mild anxiety"], "explanation": "Shows some signs of anxiety"}',
+            'You are a mental health risk assessment AI expert. Analyze the provided text for signs of suicidal ideation, self-harm, depression, anxiety, social isolation, and hopelessness. Respond with a JSON object containing a risk score (0-100), array of concerns, and explanation. Do not include any markdown formatting or code blocks in your response. Example response format: {"score": 25, "concerns": ["mild anxiety"], "explanation": "Shows some signs of anxiety"}',
         },
         {
           role: "user",
@@ -266,7 +266,7 @@ export async function GET(request) {
         },
         {
           type: "language",
-          name: "Language Analysis",
+          name: "Language Analysis(AI)",
           score: languageAnalysis.score,
           concerns: languageAnalysis.concerns,
           description: languageAnalysis.explanation,

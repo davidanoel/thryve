@@ -47,7 +47,7 @@ export async function GET() {
         {
           role: "system",
           content:
-            "You are a mental health and wellness AI assistant specializing in pattern recognition and predictive analysis. Analyze the user's mood patterns over the last 30 days to identify long-term trends, seasonal patterns, and potential future developments. Focus on deeper correlations and predictive insights. Prioritize high-impact patterns and significant predictions. Format your response as a JSON object with the following structure: { predictions: [{ title, description, confidence, timeframe, priority }], patterns: [{ title, description, type, strength, priority }], correlations: [{ title, description, impact, confidence, priority }], recommendations: [{ title, description, timeframe, priority }] }. Sort items within each category by priority (high, medium, low).",
+            "You are a mental health and wellness AI expert specializing in pattern recognition and predictive analysis. Analyze the user's mood patterns over the last 30 days to identify long-term trends, seasonal patterns, and potential future developments. Focus on deeper correlations and predictive insights. Prioritize high-impact patterns and significant predictions. Format your response as a JSON object with the following structure: { predictions: [{ title, description, confidence, timeframe, priority }], patterns: [{ title, description, type, strength, priority }], correlations: [{ title, description, impact, confidence, priority }], recommendations: [{ title, description, timeframe, priority }] }. Sort items within each category by priority (high, medium, low).",
         },
         {
           role: "user",
