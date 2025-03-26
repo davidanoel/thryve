@@ -42,6 +42,7 @@ import {
   TrashIcon,
   GlobeAltIcon,
   ArrowDownTrayIcon,
+  LinkIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 
@@ -116,7 +117,6 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [showMoodForm, setShowMoodForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("forecast");
   const [activeGoalTab, setActiveGoalTab] = useState("active");
   const [activeAnalyticsTab, setActiveAnalyticsTab] = useState("overview");
   const [riskAssessment, setRiskAssessment] = useState(null);
@@ -125,6 +125,7 @@ export default function Dashboard() {
   const [editingContact, setEditingContact] = useState(null);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [isLoadingRisk, setIsLoadingRisk] = useState(false);
+  const [activeInsightTab, setActiveInsightTab] = useState("all");
 
   // Initial data load
   useEffect(() => {
@@ -134,6 +135,7 @@ export default function Dashboard() {
         await Promise.all([
           fetchMoodHistory(),
           getGoals(),
+          getAIInsights(),
           getPredictions(),
           getAdvancedMetrics(),
           getRiskAssessment(),
@@ -251,7 +253,7 @@ export default function Dashboard() {
       setIsLoadingPredictions(true);
       const response = await fetch("/api/ai/predictions");
       const data = await response.json();
-      setPredictions(data.analysis);
+      setPredictions(data.predictions);
     } catch (error) {
       console.error("Error getting predictions:", error);
     } finally {
@@ -906,12 +908,46 @@ export default function Dashboard() {
           <div className="space-y-8">
             {/* AI Insights Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
-                <LightBulbIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                AI Insights & Recommendations
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold flex items-center">
+                  <LightBulbIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                  AI Insights & Predictions
+                </h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setActiveInsightTab("all")}
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      activeInsightTab === "all"
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setActiveInsightTab("insights")}
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      activeInsightTab === "insights"
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    Recent Insights
+                  </button>
+                  <button
+                    onClick={() => setActiveInsightTab("predictions")}
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      activeInsightTab === "predictions"
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    Long-term Predictions
+                  </button>
+                </div>
+              </div>
 
-              {isAnalyzing ? (
+              {loading || isAnalyzing ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <svg
                     className="animate-spin h-10 w-10 text-indigo-600 mb-4"
@@ -933,285 +969,349 @@ export default function Dashboard() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  <p className="text-gray-600">Analyzing your mood patterns...</p>
+                  <p className="text-gray-600">Analyzing your patterns...</p>
                 </div>
-              ) : insights && insights.length > 0 ? (
-                <div className="space-y-6">
-                  {insights.map((insight, index) => {
-                    const icons = {
-                      trend: ArrowTrendingUpIcon,
-                      activity: ChartBarIcon,
-                      recommendation: SparklesIcon,
-                      wellbeing: HeartIcon,
-                    };
-                    const Icon = icons[insight.type] || LightBulbIcon;
+              ) : insights ? (
+                <div className="space-y-8">
+                  {/* Recent Insights Section (7 days) */}
+                  {(activeInsightTab === "all" || activeInsightTab === "insights") && (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                          <ClockIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                          Recent Insights (Last 7 Days)
+                        </h3>
+                        <span className="text-sm text-gray-500">
+                          {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString()} -{" "}
+                          {new Date().toLocaleDateString()}
+                        </span>
+                      </div>
 
-                    return (
-                      <div key={index} className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-start">
-                          <div className="flex-shrink-0">
-                            <Icon className="h-6 w-6 text-indigo-600" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="flex items-center justify-between">
-                              <h3 className="text-lg font-medium text-gray-900">{insight.title}</h3>
-                              <span className="text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                                {insight.category}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-gray-600">{insight.description}</p>
+                      {/* Trends */}
+                      {insights.trends.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                            <ArrowTrendingUpIcon className="h-5 w-5 text-blue-500 mr-2" />
+                            Trend Analysis
+                          </h4>
+                          <div className="space-y-4">
+                            {insights.trends.map((trend, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                              >
+                                <div className="flex items-start space-x-4">
+                                  <div className="flex-shrink-0">
+                                    <div className="p-2 bg-blue-50 rounded-lg">
+                                      <ArrowTrendingUpIcon className="h-6 w-6 text-blue-600" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h5 className="text-base font-medium text-gray-900">
+                                        {trend.title}
+                                      </h5>
+                                      <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+                                        {trend.confidence}% Confidence
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 whitespace-pre-wrap">
+                                      {trend.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
+                      )}
+
+                      {/* Triggers */}
+                      {insights.triggers.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                            <BoltIcon className="h-5 w-5 text-orange-500 mr-2" />
+                            Identified Triggers
+                          </h4>
+                          <div className="space-y-4">
+                            {insights.triggers.map((trigger, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                              >
+                                <div className="flex items-start space-x-4">
+                                  <div className="flex-shrink-0">
+                                    <div className="p-2 bg-orange-50 rounded-lg">
+                                      <BoltIcon className="h-6 w-6 text-orange-600" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h5 className="text-base font-medium text-gray-900">
+                                        {trigger.title}
+                                      </h5>
+                                      <span className="text-sm font-medium px-3 py-1 rounded-full bg-orange-50 text-orange-600">
+                                        {trigger.impact} Impact
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 whitespace-pre-wrap">
+                                      {trigger.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Immediate Recommendations */}
+                      {insights.recommendations.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                            <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
+                            Immediate Recommendations
+                          </h4>
+                          <div className="space-y-4">
+                            {insights.recommendations.map((rec, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                              >
+                                <div className="flex items-start space-x-4">
+                                  <div className="flex-shrink-0">
+                                    <div className="p-2 bg-purple-50 rounded-lg">
+                                      <SparklesIcon className="h-6 w-6 text-purple-600" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h5 className="text-base font-medium text-gray-900">
+                                        {rec.title}
+                                      </h5>
+                                      <span
+                                        className={`text-sm font-medium px-3 py-1 rounded-full ${
+                                          rec.priority === "high"
+                                            ? "bg-red-50 text-red-600"
+                                            : rec.priority === "medium"
+                                              ? "bg-yellow-50 text-yellow-600"
+                                              : "bg-green-50 text-green-600"
+                                        }`}
+                                      >
+                                        {rec.priority.charAt(0).toUpperCase() +
+                                          rec.priority.slice(1)}{" "}
+                                        Priority
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 whitespace-pre-wrap">
+                                      {rec.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Long-term Predictions Section (30 days) */}
+                  {(activeInsightTab === "all" || activeInsightTab === "predictions") &&
+                    predictions && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                            Long-term Predictions (Last 30 Days)
+                          </h3>
+                          <span className="text-sm text-gray-500">
+                            {new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString()} -{" "}
+                            {new Date().toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {/* Future Predictions */}
+                        {predictions.predictions.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                              <ChartBarIcon className="h-5 w-5 text-indigo-500 mr-2" />
+                              Future Predictions
+                            </h4>
+                            <div className="space-y-4">
+                              {predictions.predictions.map((pred, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                >
+                                  <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                      <div className="p-2 bg-indigo-50 rounded-lg">
+                                        <ChartBarIcon className="h-6 w-6 text-indigo-600" />
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-base font-medium text-gray-900">
+                                          {pred.title}
+                                        </h5>
+                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                                          {pred.confidence}% Confidence
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 whitespace-pre-wrap">
+                                        {pred.description}
+                                      </p>
+                                      <div className="mt-2 text-sm text-gray-500">
+                                        Timeframe: {pred.timeframe}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Long-term Patterns */}
+                        {predictions.patterns.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                              <ChartBarIcon className="h-5 w-5 text-blue-500 mr-2" />
+                              Long-term Patterns
+                            </h4>
+                            <div className="space-y-4">
+                              {predictions.patterns.map((pattern, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                >
+                                  <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                      <div className="p-2 bg-blue-50 rounded-lg">
+                                        <ChartBarIcon className="h-6 w-6 text-blue-600" />
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-base font-medium text-gray-900">
+                                          {pattern.title}
+                                        </h5>
+                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+                                          {pattern.strength} Strength
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 whitespace-pre-wrap">
+                                        {pattern.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Key Correlations */}
+                        {predictions.correlations.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                              <LinkIcon className="h-5 w-5 text-green-500 mr-2" />
+                              Key Correlations
+                            </h4>
+                            <div className="space-y-4">
+                              {predictions.correlations.map((corr, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                >
+                                  <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                      <div className="p-2 bg-green-50 rounded-lg">
+                                        <LinkIcon className="h-6 w-6 text-green-600" />
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-base font-medium text-gray-900">
+                                          {corr.title}
+                                        </h5>
+                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
+                                          {corr.impact} Impact
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 whitespace-pre-wrap">
+                                        {corr.description}
+                                      </p>
+                                      <div className="mt-2 text-sm text-gray-500">
+                                        Confidence: {corr.confidence}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Strategic Recommendations */}
+                        {predictions.recommendations.length > 0 && (
+                          <div className="mb-6">
+                            <h4 className="text-base font-medium text-gray-900 mb-3 flex items-center">
+                              <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
+                              Strategic Recommendations
+                            </h4>
+                            <div className="space-y-4">
+                              {predictions.recommendations.map((rec, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                                >
+                                  <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                      <div className="p-2 bg-purple-50 rounded-lg">
+                                        <SparklesIcon className="h-6 w-6 text-purple-600" />
+                                      </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="text-base font-medium text-gray-900">
+                                          {rec.title}
+                                        </h5>
+                                        <span
+                                          className={`text-sm font-medium px-3 py-1 rounded-full ${
+                                            rec.priority === "high"
+                                              ? "bg-red-50 text-red-600"
+                                              : rec.priority === "medium"
+                                                ? "bg-yellow-50 text-yellow-600"
+                                                : "bg-green-50 text-green-600"
+                                          }`}
+                                        >
+                                          {rec.priority.charAt(0).toUpperCase() +
+                                            rec.priority.slice(1)}{" "}
+                                          Priority
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-600 whitespace-pre-wrap">
+                                        {rec.description}
+                                      </p>
+                                      <div className="mt-2 text-sm text-gray-500">
+                                        Timeframe: {rec.timeframe}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
+                    )}
                 </div>
               ) : (
                 <div className="text-center text-gray-500 py-12">
                   <LightBulbIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>Add more mood entries to receive personalized insights and recommendations.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Predictive Analytics Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
-                <SparklesIcon className="h-6 w-6 text-indigo-600 mr-2" />
-                AI Predictive Analytics
-              </h2>
-
-              {isLoadingPredictions ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <svg
-                    className="animate-spin h-10 w-10 text-indigo-600 mb-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  <p className="text-gray-600">AI is analyzing your patterns...</p>
-                </div>
-              ) : predictions ? (
-                <div>
-                  {/* Tabs Navigation */}
-                  <div className="flex space-x-1 rounded-xl bg-gray-100 p-1 mb-6">
-                    <button
-                      onClick={() => setActiveTab("forecast")}
-                      className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                        activeTab === "forecast"
-                          ? "bg-white text-indigo-600 shadow"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      <ArrowTrendingUpIcon className="h-5 w-5" />
-                      <span>Mood Forecast</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("patterns")}
-                      className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                        activeTab === "patterns"
-                          ? "bg-white text-indigo-600 shadow"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      <ArrowPathIcon className="h-5 w-5" />
-                      <span>Hidden Patterns</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("correlations")}
-                      className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                        activeTab === "correlations"
-                          ? "bg-white text-indigo-600 shadow"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      <ChartBarIcon className="h-5 w-5" />
-                      <span>Correlations</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("insights")}
-                      className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                        activeTab === "insights"
-                          ? "bg-white text-indigo-600 shadow"
-                          : "text-gray-600 hover:text-gray-800"
-                      }`}
-                    >
-                      <LightBulbIcon className="h-5 w-5" />
-                      <span>AI Insights</span>
-                    </button>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="mt-6">
-                    {/* Mood Forecast Tab */}
-                    {activeTab === "forecast" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 gap-4">
-                          {predictions.predictions.map((prediction, index) => (
-                            <div
-                              key={index}
-                              className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center space-x-3">
-                                  {prediction.trend === "improving" ? (
-                                    <ArrowTrendingUpIcon className="h-5 w-5 text-green-500" />
-                                  ) : prediction.trend === "declining" ? (
-                                    <ArrowTrendingDownIcon className="h-5 w-5 text-red-500" />
-                                  ) : (
-                                    <ArrowPathIcon className="h-5 w-5 text-yellow-500" />
-                                  )}
-                                  <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                                    {prediction.factor}
-                                  </span>
-                                </div>
-                                <div className="flex items-center">
-                                  <span className="text-sm text-gray-500 mr-2">Confidence</span>
-                                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-indigo-600 h-2 rounded-full"
-                                      style={{
-                                        width: `${parseInt(prediction.confidence)}%`,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-gray-600">{prediction.explanation}</p>
-                              {prediction.actionItems && (
-                                <div className="mt-3 text-sm text-indigo-600">
-                                  Suggested Action: {prediction.actionItems}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Hidden Patterns Tab */}
-                    {activeTab === "patterns" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 gap-4">
-                          {predictions.patterns.map((pattern, index) => (
-                            <div
-                              key={index}
-                              className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                                  {pattern.type}
-                                </span>
-                                <div className="flex items-center">
-                                  <span className="text-sm text-gray-500 mr-2">
-                                    Pattern Strength
-                                  </span>
-                                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-indigo-600 h-2 rounded-full"
-                                      style={{
-                                        width: `${parseInt(pattern.confidence)}%`,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                              <p className="text-gray-600">{pattern.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Correlations Tab */}
-                    {activeTab === "correlations" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 gap-4">
-                          {predictions.correlations.map((correlation, index) => (
-                            <div
-                              key={index}
-                              className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                                    {correlation.factors.join(" & ")}
-                                  </span>
-                                  <span
-                                    className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                      correlation.strength === "strong"
-                                        ? "bg-green-50 text-green-600"
-                                        : correlation.strength === "moderate"
-                                          ? "bg-yellow-50 text-yellow-600"
-                                          : "bg-red-50 text-red-600"
-                                    }`}
-                                  >
-                                    {correlation.strength.charAt(0).toUpperCase() +
-                                      correlation.strength.slice(1)}{" "}
-                                    Correlation
-                                  </span>
-                                </div>
-                              </div>
-                              <p className="text-gray-600">{correlation.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* AI Insights Tab */}
-                    {activeTab === "insights" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 gap-4">
-                          {predictions.recommendations.map((recommendation, index) => (
-                            <div
-                              key={index}
-                              className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <span
-                                  className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                    recommendation.priority === "high"
-                                      ? "bg-red-50 text-red-600"
-                                      : recommendation.priority === "medium"
-                                        ? "bg-yellow-50 text-yellow-600"
-                                        : "bg-green-50 text-green-600"
-                                  }`}
-                                >
-                                  {recommendation.priority.charAt(0).toUpperCase() +
-                                    recommendation.priority.slice(1)}{" "}
-                                  Priority
-                                </span>
-                              </div>
-                              <h4 className="font-medium text-gray-900 mb-2">
-                                {recommendation.action}
-                              </h4>
-                              <p className="text-gray-600">{recommendation.impact}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-12">
-                  <SparklesIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>Add more mood entries to receive AI-powered predictions and insights.</p>
+                  <p>Add more mood entries to receive personalized insights and predictions.</p>
                 </div>
               )}
             </div>
@@ -1996,23 +2096,21 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+        {/* Add this button in the bottom-right corner of the dashboard */}
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handleExportData}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4 mr-1.5" />
+            Export Data
+          </button>
+        </div>
       </div>
 
       {showGoalForm && (
         <GoalForm onClose={() => setShowGoalForm(false)} onSubmit={handleGoalSubmit} />
       )}
-
-      {/* Add this button in the top-right corner of the dashboard */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <button
-          onClick={handleExportData}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-          Export Data
-        </button>
-      </div>
     </div>
   );
 }

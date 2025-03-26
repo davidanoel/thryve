@@ -22,71 +22,36 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get recent mood entries with all metrics
-    const recentEntries = user.moodEntries
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 30); // Get last 30 entries for better pattern recognition
+    // Get user's mood entries for the last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const moodEntries = user.moodEntries
+      .filter((entry) => new Date(entry.createdAt) >= thirtyDaysAgo)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     // Prepare data for AI analysis
-    const moodData = recentEntries.map((entry) => ({
-      date: new Date(entry.createdAt).toISOString().split("T")[0],
+    const moodData = moodEntries.map((entry) => ({
+      date: entry.createdAt,
       mood: entry.mood,
       activities: entry.activities,
       notes: entry.notes,
-      sleepQuality: entry.sleepQuality,
-      energyLevel: entry.energyLevel,
-      socialInteractionCount: entry.socialInteractionCount,
-      stressLevel: entry.stressLevel,
+      sleep: entry.sleepQuality,
+      stress: entry.stressLevel,
+      energy: entry.energyLevel,
+      social: entry.socialInteractionCount,
     }));
 
-    // Generate AI predictions and patterns
+    // Generate AI predictions
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: `You are a mental health analytics AI. Analyze the user's mood data and provide:
-1. Pattern Recognition: Identify recurring patterns in mood, sleep, energy, and stress levels
-2. Predictive Insights: Based on the patterns, predict potential mood trends
-3. Correlation Analysis: Identify relationships between different factors (e.g., sleep quality and mood)
-4. Recommendations: Suggest specific actions to improve mental well-being based on the analysis
-
-Format your response as a JSON object with the following structure:
-{
-  "patterns": [
-    {
-      "type": "mood|sleep|energy|stress|activity",
-      "description": "Description of the pattern",
-      "confidence": "high|medium|low"
-    }
-  ],
-  "predictions": [
-    {
-      "factor": "mood|sleep|energy|stress|activity",
-      "trend": "improving|declining|stable",
-      "confidence": "high|medium|low",
-      "explanation": "Explanation of the prediction"
-    }
-  ],
-  "correlations": [
-    {
-      "factors": ["factor1", "factor2"],
-      "strength": "strong|moderate|weak",
-      "description": "Description of the correlation"
-    }
-  ],
-  "recommendations": [
-    {
-      "action": "Specific action to take",
-      "impact": "Expected impact on mental well-being",
-      "priority": "high|medium|low"
-    }
-  ]
-}`,
+          content:
+            "You are a mental health and wellness AI assistant specializing in pattern recognition and predictive analysis. Analyze the user's mood patterns over the last 30 days to identify long-term trends, seasonal patterns, and potential future developments. Focus on deeper correlations and predictive insights. Prioritize high-impact patterns and significant predictions. Format your response as a JSON object with the following structure: { predictions: [{ title, description, confidence, timeframe, priority }], patterns: [{ title, description, type, strength, priority }], correlations: [{ title, description, impact, confidence, priority }], recommendations: [{ title, description, timeframe, priority }] }. Sort items within each category by priority (high, medium, low).",
         },
         {
           role: "user",
-          content: `Please analyze this mood data and provide predictions and patterns: ${JSON.stringify(
+          content: `Please analyze this 30-day mood data and provide predictive insights: ${JSON.stringify(
             moodData
           )}`,
         },
@@ -95,15 +60,71 @@ Format your response as a JSON object with the following structure:
       max_tokens: 1000,
     });
 
-    // Parse AI response
-    const responseContent = completion.choices[0].message.content;
-    // Clean the response by removing markdown code block formatting
-    const cleanedContent = responseContent.replace(/```json\n?|\n?```/g, "").trim();
-    const analysis = JSON.parse(cleanedContent);
+    // Parse AI response into structured predictions
+    const aiResponse = completion.choices[0].message.content;
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(aiResponse);
+    } catch (error) {
+      console.error("Error parsing AI response:", error);
+      parsedResponse = {
+        predictions: [],
+        patterns: [],
+        correlations: [],
+        recommendations: [],
+      };
+    }
+
+    // Sort items by priority within each category
+    const sortByPriority = (items) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return items.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    };
+
+    // Add metadata and icons to each prediction type, then sort by priority
+    const predictions = {
+      predictions: sortByPriority(
+        parsedResponse.predictions.map((pred) => ({
+          ...pred,
+          type: "prediction",
+          icon: "chart",
+          color: "indigo",
+          category: "Future Predictions",
+        }))
+      ),
+      patterns: sortByPriority(
+        parsedResponse.patterns.map((pattern) => ({
+          ...pattern,
+          type: "pattern",
+          icon: "chart-bar",
+          color: "blue",
+          category: "Long-term Patterns",
+        }))
+      ),
+      correlations: sortByPriority(
+        parsedResponse.correlations.map((corr) => ({
+          ...corr,
+          type: "correlation",
+          icon: "link",
+          color: "green",
+          category: "Key Correlations",
+        }))
+      ),
+      recommendations: sortByPriority(
+        parsedResponse.recommendations.map((rec) => ({
+          ...rec,
+          type: "recommendation",
+          icon: "sparkles",
+          color: "purple",
+          category: "Strategic Recommendations",
+        }))
+      ),
+    };
 
     return NextResponse.json({
       success: true,
-      analysis,
+      predictions,
+      timeRange: "Last 30 days",
     });
   } catch (error) {
     console.error("Get AI predictions error:", error);
