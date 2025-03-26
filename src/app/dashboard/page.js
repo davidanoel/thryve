@@ -120,12 +120,14 @@ export default function Dashboard() {
   const [riskAssessment, setRiskAssessment] = useState(null);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [showEmergencyContactForm, setShowEmergencyContactForm] = useState(false);
-  const [isLoadingRisk, setIsLoadingRisk] = useState(false);
+  const [editingContact, setEditingContact] = useState(null);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [isLoadingRisk, setIsLoadingRisk] = useState(false);
   const [crisisResources, setCrisisResources] = useState(null);
   const [isLoadingResources, setIsLoadingResources] = useState(false);
   const [resourceType, setResourceType] = useState("all");
 
+  // Initial data load
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -137,7 +139,6 @@ export default function Dashboard() {
           getAdvancedMetrics(),
           getRiskAssessment(),
           getEmergencyContacts(),
-          getCrisisResources(),
         ]);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -148,7 +149,25 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [resourceType]);
+  }, []); // Only re-run when user changes
+
+  // Separate effect for crisis resources that depends on resourceType
+  useEffect(() => {
+    const fetchResources = async () => {
+      setIsLoadingResources(true);
+      try {
+        const response = await fetch(`/api/crisis-resources?type=${resourceType}`);
+        const data = await response.json();
+        setCrisisResources(data.resources);
+      } catch (error) {
+        console.error("Error fetching crisis resources:", error);
+      } finally {
+        setIsLoadingResources(false);
+      }
+    };
+
+    fetchResources();
+  }, [resourceType]); // Only re-run when resourceType changes
 
   const fetchMoodHistory = async () => {
     try {
@@ -274,13 +293,16 @@ export default function Dashboard() {
 
   const getRiskAssessment = async () => {
     try {
+      setIsLoadingRisk(true);
       const response = await fetch("/api/risk/assessment");
       if (!response.ok) throw new Error("Failed to fetch risk assessment");
       const data = await response.json();
-      setRiskAssessment(data); // Update this line to use data directly instead of data.assessment
+      setRiskAssessment(data);
     } catch (error) {
       console.error("Error getting risk assessment:", error);
       setRiskAssessment(null);
+    } finally {
+      setIsLoadingRisk(false);
     }
   };
 
@@ -334,6 +356,32 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error deleting emergency contact:", error);
+    }
+  };
+
+  const handleEditEmergencyContact = async (contactData) => {
+    try {
+      const response = await fetch(`/api/emergency-contacts?id=${editingContact._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(contactData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmergencyContacts(
+          emergencyContacts.map((c) => (c._id === editingContact._id ? data.contact : c))
+        );
+        setShowEmergencyContactForm(false);
+        setEditingContact(null);
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error) {
+      console.error("Error updating emergency contact:", error);
     }
   };
 
@@ -616,6 +664,100 @@ export default function Dashboard() {
               <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center text-green-700">
                 <CheckCircleIcon className="h-5 w-5 mr-2" />
                 Entry saved successfully!
+              </div>
+            )}
+          </div>
+
+          {/* Crisis Resources Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <PhoneIcon className="h-6 w-6 text-red-500" />
+                Crisis Resources
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setResourceType("all")}
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    resourceType === "all" ? "bg-red-500 text-white" : "bg-gray-100"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setResourceType("emergency")}
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    resourceType === "emergency" ? "bg-red-500 text-white" : "bg-gray-100"
+                  }`}
+                >
+                  Emergency
+                </button>
+                <button
+                  onClick={() => setResourceType("professional")}
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    resourceType === "professional" ? "bg-red-500 text-white" : "bg-gray-100"
+                  }`}
+                >
+                  Professional
+                </button>
+                <button
+                  onClick={() => setResourceType("support")}
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    resourceType === "support" ? "bg-red-500 text-white" : "bg-gray-100"
+                  }`}
+                >
+                  Support
+                </button>
+              </div>
+            </div>
+
+            {isLoadingResources ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {crisisResources?.map((resource) => (
+                  <div
+                    key={resource.name}
+                    className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-semibold text-lg">{resource.name}</h3>
+                      {resource.type === "emergency" && (
+                        <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                          Emergency
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-600 text-sm mt-2">{resource.description}</p>
+                    <div className="mt-4 space-y-2">
+                      {resource.phone && (
+                        <a
+                          href={`tel:${resource.phone}`}
+                          className="flex items-center gap-2 text-red-500 hover:text-red-600"
+                        >
+                          <PhoneIcon className="h-4 w-4" />
+                          {resource.phone}
+                        </a>
+                      )}
+                      {resource.website && (
+                        <a
+                          href={resource.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
+                        >
+                          <GlobeAltIcon className="h-4 w-4" />
+                          Visit Website
+                        </a>
+                      )}
+                    </div>
+                    <div className="mt-3 text-xs text-gray-500">
+                      Available: {resource.availability}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1700,7 +1842,10 @@ export default function Dashboard() {
                 Emergency Contacts
               </h2>
               <button
-                onClick={() => setShowEmergencyContactForm(true)}
+                onClick={() => {
+                  setEditingContact(null);
+                  setShowEmergencyContactForm(true);
+                }}
                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 <PlusIcon className="h-5 w-5 mr-1" />
@@ -1758,12 +1903,30 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleDeleteEmergencyContact(contact._id)}
-                      className="text-gray-400 hover:text-red-600"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setEditingContact(contact);
+                          setShowEmergencyContactForm(true);
+                        }}
+                        className="text-gray-400 hover:text-indigo-600"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEmergencyContact(contact._id)}
+                        className="text-gray-400 hover:text-red-600"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1782,9 +1945,14 @@ export default function Dashboard() {
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
               <div className="bg-white rounded-lg max-w-md w-full p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium">Add Emergency Contact</h3>
+                  <h3 className="text-lg font-medium">
+                    {editingContact ? "Edit Emergency Contact" : "Add Emergency Contact"}
+                  </h3>
                   <button
-                    onClick={() => setShowEmergencyContactForm(false)}
+                    onClick={() => {
+                      setShowEmergencyContactForm(false);
+                      setEditingContact(null);
+                    }}
                     className="text-gray-400 hover:text-gray-500"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -1794,7 +1962,7 @@ export default function Dashboard() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     const formData = new FormData(e.target);
-                    handleAddEmergencyContact({
+                    const contactData = {
                       name: formData.get("name"),
                       relationship: formData.get("relationship"),
                       phone: formData.get("phone"),
@@ -1803,7 +1971,13 @@ export default function Dashboard() {
                         alertThreshold: formData.get("alertThreshold"),
                         methods: Array.from(formData.getAll("notificationMethods")),
                       },
-                    });
+                    };
+
+                    if (editingContact) {
+                      handleEditEmergencyContact(contactData);
+                    } else {
+                      handleAddEmergencyContact(contactData);
+                    }
                   }}
                   className="space-y-4"
                 >
@@ -1816,6 +1990,7 @@ export default function Dashboard() {
                       name="name"
                       id="name"
                       required
+                      defaultValue={editingContact?.name}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -1831,6 +2006,7 @@ export default function Dashboard() {
                       name="relationship"
                       id="relationship"
                       required
+                      defaultValue={editingContact?.relationship}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -1843,6 +2019,7 @@ export default function Dashboard() {
                       name="phone"
                       id="phone"
                       required
+                      defaultValue={editingContact?.phone}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -1855,6 +2032,7 @@ export default function Dashboard() {
                       name="email"
                       id="email"
                       required
+                      defaultValue={editingContact?.email}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -1868,6 +2046,9 @@ export default function Dashboard() {
                     <select
                       name="alertThreshold"
                       id="alertThreshold"
+                      defaultValue={
+                        editingContact?.notificationPreferences?.alertThreshold || "critical"
+                      }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option value="critical">Critical Risk Only</option>
@@ -1884,7 +2065,9 @@ export default function Dashboard() {
                           type="checkbox"
                           name="notificationMethods"
                           value="email"
-                          defaultChecked
+                          defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                            "email"
+                          )}
                           className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <label htmlFor="email" className="ml-2 text-sm text-gray-700">
@@ -1896,6 +2079,9 @@ export default function Dashboard() {
                           type="checkbox"
                           name="notificationMethods"
                           value="sms"
+                          defaultChecked={editingContact?.notificationPreferences?.methods?.includes(
+                            "sms"
+                          )}
                           className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <label htmlFor="sms" className="ml-2 text-sm text-gray-700">
@@ -1907,7 +2093,10 @@ export default function Dashboard() {
                   <div className="flex justify-end space-x-3 mt-6">
                     <button
                       type="button"
-                      onClick={() => setShowEmergencyContactForm(false)}
+                      onClick={() => {
+                        setShowEmergencyContactForm(false);
+                        setEditingContact(null);
+                      }}
                       className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                       Cancel
@@ -1916,107 +2105,13 @@ export default function Dashboard() {
                       type="submit"
                       className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                      Add Contact
+                      {editingContact ? "Update Contact" : "Add Contact"}
                     </button>
                   </div>
                 </form>
               </div>
             </div>
           )}
-
-          {/* Crisis Resources Section */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <PhoneIcon className="h-6 w-6 text-red-500" />
-                Crisis Resources
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setResourceType("all")}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    resourceType === "all" ? "bg-red-500 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setResourceType("emergency")}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    resourceType === "emergency" ? "bg-red-500 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  Emergency
-                </button>
-                <button
-                  onClick={() => setResourceType("professional")}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    resourceType === "professional" ? "bg-red-500 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  Professional
-                </button>
-                <button
-                  onClick={() => setResourceType("support")}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    resourceType === "support" ? "bg-red-500 text-white" : "bg-gray-100"
-                  }`}
-                >
-                  Support
-                </button>
-              </div>
-            </div>
-
-            {isLoadingResources ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {crisisResources?.map((resource) => (
-                  <div
-                    key={resource.name}
-                    className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-lg">{resource.name}</h3>
-                      {resource.type === "emergency" && (
-                        <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                          Emergency
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-sm mt-2">{resource.description}</p>
-                    <div className="mt-4 space-y-2">
-                      {resource.phone && (
-                        <a
-                          href={`tel:${resource.phone}`}
-                          className="flex items-center gap-2 text-red-500 hover:text-red-600"
-                        >
-                          <PhoneIcon className="h-4 w-4" />
-                          {resource.phone}
-                        </a>
-                      )}
-                      {resource.website && (
-                        <a
-                          href={resource.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-blue-500 hover:text-blue-600"
-                        >
-                          <GlobeAltIcon className="h-4 w-4" />
-                          Visit Website
-                        </a>
-                      )}
-                    </div>
-                    <div className="mt-3 text-xs text-gray-500">
-                      Available: {resource.availability}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 

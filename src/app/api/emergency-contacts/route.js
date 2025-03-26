@@ -5,6 +5,7 @@ import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
+import { sendEmergencySMS } from "@/lib/twilio";
 
 // Helper function to generate verification code
 function generateVerificationCode() {
@@ -61,7 +62,7 @@ export async function POST(req) {
       email,
       notificationPreferences: notificationPreferences || {
         alertThreshold: "critical",
-        methods: ["email"],
+        methods: ["email", "sms"],
       },
       verificationCode,
       verificationExpires,
@@ -86,56 +87,47 @@ export async function POST(req) {
   }
 }
 
-export async function PUT(req) {
+export async function PUT(request) {
   try {
-    const session = await getServerSession();
-    if (!session) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const data = await request.json();
 
-    const body = await req.json();
-    const { contactId, updates } = body;
-
-    if (!contactId || !updates) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "Contact ID is required" }, { status: 400 });
     }
 
     await connectDB();
 
-    const contact = await EmergencyContact.findOne({
-      _id: contactId,
-      userId: session.userId,
-    });
-
-    if (!contact) {
-      return NextResponse.json({ error: "Emergency contact not found" }, { status: 404 });
+    // Find the existing contact
+    const existingContact = await EmergencyContact.findById(id);
+    if (!existingContact) {
+      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
 
-    // Update allowed fields
-    const allowedUpdates = [
-      "name",
-      "relationship",
-      "phone",
-      "email",
-      "notificationPreferences",
-      "notes",
-    ];
+    // If email is being changed and the contact was verified, reset verification
+    if (data.email !== existingContact.email && existingContact.isVerified) {
+      data.isVerified = false;
+      data.verificationToken = Math.random().toString(36).substring(2);
+      data.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    }
 
-    allowedUpdates.forEach((field) => {
-      if (updates[field] !== undefined) {
-        contact[field] = updates[field];
-      }
-    });
+    // Update the contact
+    const updatedContact = await EmergencyContact.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true }
+    );
 
-    await contact.save();
+    // If email was changed and contact was previously verified, send new verification email
+    if (data.email !== existingContact.email && existingContact.isVerified) {
+      await sendVerificationEmail(data.email, data.verificationToken);
+    }
 
-    return NextResponse.json({
-      success: true,
-      contact,
-    });
+    return NextResponse.json({ contact: updatedContact });
   } catch (error) {
-    console.error("Update emergency contact error:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    console.error("Error updating emergency contact:", error);
+    return NextResponse.json({ error: "Failed to update emergency contact" }, { status: 500 });
   }
 }
 

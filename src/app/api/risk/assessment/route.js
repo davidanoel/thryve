@@ -6,6 +6,7 @@ import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import OpenAI from "openai";
 import { sendEmergencyAlert } from "@/lib/email";
+import { sendEmergencySMS } from "@/lib/twilio";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -190,54 +191,6 @@ function getRiskLevel(score) {
   return "low";
 }
 
-async function handleRiskAssessment(user, riskScore, riskLevel, riskAssessment) {
-  console.log("Risk score:", riskScore);
-
-  // Trigger notifications for high or critical risk
-  if (riskLevel === "high" || riskLevel === "critical") {
-    try {
-      // Get verified emergency contacts
-      const contacts = await EmergencyContact.find({
-        userId: user._id,
-        isVerified: true,
-      });
-
-      // Filter contacts based on their notification preferences
-      const contactsToNotify = contacts.filter((contact) =>
-        contact.notificationPreferences?.alertThreshold === "high"
-          ? riskLevel === "high" || riskLevel === "critical"
-          : riskLevel === "critical"
-      );
-
-      // Send notifications
-      for (const contact of contactsToNotify) {
-        try {
-          await sendEmergencyAlert({
-            user,
-            contact,
-            riskAssessment: {
-              riskLevel,
-              score: riskScore,
-              ...riskAssessment,
-            },
-          });
-
-          // Update last notified timestamp
-          await EmergencyContact.findByIdAndUpdate(contact._id, {
-            lastNotified: new Date(),
-          });
-        } catch (error) {
-          console.error("Error sending notification to contact:", error);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to send notifications:", error);
-    }
-  }
-
-  return riskLevel;
-}
-
 export async function GET(request) {
   try {
     const session = await getServerSession();
@@ -343,11 +296,80 @@ export async function GET(request) {
       timestamp: new Date(),
     });
 
-    // Handle notifications
-    await handleRiskAssessment(user, riskScore, riskLevel, {
-      factors: assessment.factors,
-      timestamp: assessment.timestamp,
-    });
+    // Handle notifications if risk level is high or critical
+    if (riskLevel === "high" || riskLevel === "critical") {
+      try {
+        // Get verified emergency contacts
+        const contacts = await EmergencyContact.find({
+          userId: user._id,
+          isVerified: true,
+        });
+
+        // Filter contacts based on their notification preferences
+        const contactsToNotify = contacts.filter((contact) => {
+          const shouldNotify =
+            contact.notificationPreferences?.alertThreshold === "high"
+              ? riskLevel === "high" || riskLevel === "critical"
+              : riskLevel === "critical";
+          console.log(`Contact ${contact.name} notification check:`, {
+            alertThreshold: contact.notificationPreferences?.alertThreshold,
+            methods: contact.notificationPreferences?.methods,
+            shouldNotify,
+          });
+          return shouldNotify;
+        });
+        console.log("Contacts to notify:", contactsToNotify);
+
+        // Send notifications
+        for (const contact of contactsToNotify) {
+          try {
+            const methods = contact.notificationPreferences?.methods || [];
+            console.log(`Processing notifications for ${contact.name}:`, methods);
+
+            // Send email notification if enabled
+            if (methods.includes("email")) {
+              console.log(`Sending email to ${contact.email}`);
+              await sendEmergencyAlert({
+                user,
+                contact,
+                riskAssessment: {
+                  riskLevel,
+                  score: riskScore,
+                  factors: assessment.factors,
+                  user: {
+                    name: user.name,
+                    email: user.email,
+                  },
+                },
+              });
+            }
+
+            // Send SMS notification if enabled and phone number exists
+            if (methods.includes("sms") && contact.phone) {
+              console.log(`Sending SMS to ${contact.phone}`);
+              await sendEmergencySMS(contact, {
+                riskLevel,
+                score: riskScore,
+                factors: assessment.factors,
+                user: {
+                  name: user.name,
+                  email: user.email,
+                },
+              });
+            }
+
+            // Update last notified timestamp
+            await EmergencyContact.findByIdAndUpdate(contact._id, {
+              lastNotified: new Date(),
+            });
+          } catch (error) {
+            console.error(`Error sending notifications to ${contact.name}:`, error);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to send notifications:", error);
+      }
+    }
 
     return NextResponse.json({
       riskLevel,

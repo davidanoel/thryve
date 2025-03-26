@@ -19,12 +19,10 @@ const CRISIS_RESOURCES = [
     availability: "24/7",
   },
   {
-    name: "SAMHSA's National Helpline",
-    type: "professional",
-    description:
-      "Treatment referral and information service for individuals facing mental health disorders",
-    phone: "1-800-662-4357",
-    website: "https://www.samhsa.gov/find-help/national-helpline",
+    name: "Emergency Services",
+    type: "emergency",
+    description: "For immediate medical or police assistance",
+    phone: "911",
     availability: "24/7",
   },
   {
@@ -43,32 +41,23 @@ const CRISIS_RESOURCES = [
     availability: "24/7 online support",
   },
   {
-    name: "NAMI HelpLine",
-    type: "support",
-    description:
-      "Information, resource referrals and support for people living with mental health conditions",
-    phone: "1-800-950-6264",
-    website: "https://www.nami.org/help",
-    availability: "Mon-Fri, 10 AM - 10 PM ET",
+    name: "SAMHSA Treatment Locator",
+    type: "professional",
+    description: "Find treatment facilities and programs in your area",
+    website: "https://findtreatment.samhsa.gov",
+    availability: "24/7",
   },
 ];
 
 export async function GET(request) {
-  try {
-    // Get the type query parameter
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type");
 
-    // If type is specified and valid, filter resources
-    if (type && ["emergency", "professional", "support"].includes(type)) {
-      const filteredResources = CRISIS_RESOURCES.filter((resource) => resource.type === type);
-      return NextResponse.json(filteredResources);
-    }
+  let filteredResources = CRISIS_RESOURCES;
 
-    // If no type specified or invalid type, return all resources
-    return NextResponse.json(CRISIS_RESOURCES);
-  } catch (error) {
-    console.error("Error fetching crisis resources:", error);
-    return NextResponse.json({ error: "Failed to fetch crisis resources" }, { status: 500 });
+  if (type && type !== "all") {
+    filteredResources = CRISIS_RESOURCES.filter((resource) => resource.type === type);
   }
+
+  return NextResponse.json({ resources: filteredResources });
 }
