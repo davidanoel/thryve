@@ -59,5 +59,5 @@ export async function GET(request) {
     filteredResources = CRISIS_RESOURCES.filter((resource) => resource.type === type);
   }
 
-  return NextResponse.json({ resources: filteredResources });
+  return NextResponse.json(filteredResources);
 }

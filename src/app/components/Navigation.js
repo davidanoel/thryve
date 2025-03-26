@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   const navigation = [
     { name: "About", href: "/about" },
@@ -16,12 +18,17 @@ export default function Navigation() {
       ? [
           { name: "Dashboard", href: "/dashboard" },
           { name: "Profile", href: "/profile" },
+          {
+            name: "Crisis Resources",
+            href: "/crisis-resources",
+            className: "text-red-600 hover:text-red-700 font-semibold",
+          },
         ]
       : []),
   ];
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -35,43 +42,28 @@ export default function Navigation() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    pathname === item.href
+                      ? "border-indigo-500 text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  } ${item.className || ""}`}
                 >
                   {item.name}
                 </Link>
               ))}
             </div>
           </div>
-
-          <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+          <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {user ? (
-              <>
-                <span className="text-gray-700">Welcome, {user.name}</span>
-                <button
-                  onClick={logout}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Sign out
-                </button>
-              </>
+              <button onClick={logout} className="text-gray-500 hover:text-gray-700">
+                Sign Out
+              </button>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Sign up
-                </Link>
-              </>
+              <Link href="/login" className="text-gray-500 hover:text-gray-700">
+                Sign In
+              </Link>
             )}
           </div>
-
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -89,50 +81,35 @@ export default function Navigation() {
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isOpen ? "block" : "hidden"} sm:hidden`}>
+      <div className={`sm:hidden ${isOpen ? "block" : "hidden"}`}>
         <div className="pt-2 pb-3 space-y-1">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 hover:border-indigo-500"
-              onClick={() => setIsOpen(false)}
+              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                pathname === item.href
+                  ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+                  : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+              } ${item.className || ""}`}
             >
               {item.name}
             </Link>
           ))}
-        </div>
-        <div className="pt-4 pb-3 border-t border-gray-200">
           {user ? (
-            <div className="space-y-1">
-              <div className="px-4 py-2 text-gray-700">Welcome, {user.name}</div>
-              <button
-                onClick={() => {
-                  logout();
-                  setIsOpen(false);
-                }}
-                className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-              >
-                Sign out
-              </button>
-            </div>
+            <button
+              onClick={logout}
+              className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+            >
+              Sign Out
+            </button>
           ) : (
-            <div className="space-y-1">
-              <Link
-                href="/login"
-                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/signup"
-                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign up
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+            >
+              Sign In
+            </Link>
           )}
         </div>
       </div>
