@@ -459,21 +459,21 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Left Column */}
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-8">
             {/* Mood Entry Form */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">How are you feeling today?</h2>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">How are you feeling today?</h2>
               <form onSubmit={handleMoodSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Mood</label>
                   <select
                     value={mood}
                     onChange={(e) => setMood(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
                     required
                   >
                     <option value="">Select your mood</option>
@@ -487,9 +487,12 @@ export default function Dashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Activities</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {activityOptions.map((activity) => (
-                      <label key={activity} className="flex items-center space-x-2">
+                      <label
+                        key={activity}
+                        className="flex items-center space-x-2 text-sm sm:text-base"
+                      >
                         <input
                           type="checkbox"
                           checked={activities.includes(activity)}
@@ -500,7 +503,7 @@ export default function Dashboard() {
                               setActivities(activities.filter((a) => a !== activity));
                             }
                           }}
-                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                          className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4 sm:h-5 sm:w-5"
                         />
                         <span>{activity}</span>
                       </label>
@@ -667,38 +670,27 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Goals & Recommendations - Moved here */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center">
-                  <AcademicCapIcon className="h-6 w-6 text-indigo-600 mr-2" />
+            {/* Goals & Recommendations */}
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold flex items-center">
+                  <AcademicCapIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-2" />
                   Goals & Recommendations
                 </h2>
                 <button
                   onClick={() => setShowGoalForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <PlusIcon className="h-5 w-5 mr-2" />
                   Add Goal
                 </button>
               </div>
 
               {/* Tabs Navigation */}
-              <div className="flex space-x-1 rounded-xl bg-gray-100 p-1 mb-6">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-1 rounded-xl bg-gray-100 p-1 mb-6">
                 <button
                   onClick={() => setActiveGoalTab("active")}
-                  className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
+                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
                     activeGoalTab === "active"
                       ? "bg-white text-indigo-600 shadow"
                       : "text-gray-600 hover:text-gray-800"
@@ -709,7 +701,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => setActiveGoalTab("completed")}
-                  className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
+                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
                     activeGoalTab === "completed"
                       ? "bg-white text-indigo-600 shadow"
                       : "text-gray-600 hover:text-gray-800"
@@ -720,7 +712,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => setActiveGoalTab("recommendations")}
-                  className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
+                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
                     activeGoalTab === "recommendations"
                       ? "bg-white text-indigo-600 shadow"
                       : "text-gray-600 hover:text-gray-800"
@@ -911,10 +903,10 @@ export default function Dashboard() {
             </div>
 
             {/* Emergency Contacts Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <PhoneIcon className="h-6 w-6 text-red-500" />
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                  <PhoneIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
                   Emergency Contacts
                 </h2>
                 <button
@@ -1233,16 +1225,16 @@ export default function Dashboard() {
           {/* Right Column */}
           <div className="space-y-8">
             {/* AI Insights Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center">
-                  <LightBulbIcon className="h-6 w-6 text-indigo-600 mr-2" />
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold flex items-center">
+                  <LightBulbIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-2" />
                   AI Insights & Predictions
                 </h2>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setActiveInsightTab("all")}
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                       activeInsightTab === "all"
                         ? "bg-indigo-100 text-indigo-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -1252,7 +1244,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => setActiveInsightTab("insights")}
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                       activeInsightTab === "insights"
                         ? "bg-indigo-100 text-indigo-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -1262,7 +1254,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => setActiveInsightTab("predictions")}
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                       activeInsightTab === "predictions"
                         ? "bg-indigo-100 text-indigo-600"
                         : "text-gray-600 hover:text-gray-800"
@@ -1925,10 +1917,10 @@ export default function Dashboard() {
             </div>
 
             {/* Risk Assessment Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center">
-                  <ShieldExclamationIcon className="h-6 w-6 text-indigo-600 mr-2" />
+                <h2 className="text-lg sm:text-xl font-semibold flex items-center">
+                  <ShieldExclamationIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-2" />
                   AI Risk Assessment
                 </h2>
               </div>
