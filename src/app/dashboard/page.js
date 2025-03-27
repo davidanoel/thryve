@@ -47,6 +47,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import AdvancedAnalytics from "@/app/components/AdvancedAnalytics";
+import MoodForm from "@/app/components/MoodForm";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -97,24 +98,15 @@ const sliderLabels = {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [mood, setMood] = useState("");
-  const [activities, setActivities] = useState([]);
-  const [notes, setNotes] = useState("");
-  const [sleepQuality, setSleepQuality] = useState(3);
-  const [energyLevel, setEnergyLevel] = useState(3);
-  const [socialInteractionCount, setSocialInteractionCount] = useState(5);
-  const [stressLevel, setStressLevel] = useState(3);
   const [moodHistory, setMoodHistory] = useState([]);
   const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showMoodForm, setShowMoodForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [activeGoalTab, setActiveGoalTab] = useState("active");
   const [riskAssessment, setRiskAssessment] = useState(null);
@@ -152,9 +144,9 @@ export default function Dashboard() {
         await Promise.all([
           fetchMoodHistory(),
           getGoals(),
-          getAIInsights(),
-          getPredictions(),
-          getRiskAssessment(),
+          //getAIInsights(),
+          //getPredictions(),
+          //getRiskAssessment(),
           getEmergencyContacts(),
         ]);
       } catch (error) {
@@ -192,49 +184,20 @@ export default function Dashboard() {
     }
   };
 
-  const handleMoodSubmit = async (e) => {
-    e.preventDefault();
+  const handleMoodSubmit = async (formData) => {
     setIsLoading(true);
 
     try {
-      // Format activities properly
-      const formattedActivities = activities.map((activity) => ({
-        name: activity,
-        duration: 30, // Default duration in minutes
-        isSocial: activity === "Social Activity",
-      }));
-
       const response = await fetch("/api/mood/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          mood,
-          activities: formattedActivities,
-          notes,
-          sleepQuality,
-          energyLevel,
-          socialInteractionCount,
-          stressLevel,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        // Reset form
-        setMood("");
-        setActivities([]);
-        setNotes("");
-        setSleepQuality(3);
-        setEnergyLevel(3);
-        setSocialInteractionCount(5);
-        setStressLevel(3);
-
-        // Show success message
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-
         // Refresh data
         await fetchMoodHistory();
 
@@ -460,202 +423,7 @@ export default function Dashboard() {
           {/* Left Column */}
           <div className="space-y-4 sm:space-y-8">
             {/* Mood Entry Form */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4">How are you feeling today?</h2>
-              <form onSubmit={handleMoodSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Mood</label>
-                  <select
-                    value={mood}
-                    onChange={(e) => setMood(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
-                    required
-                  >
-                    <option value="">Select your mood</option>
-                    {moodOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Activities</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {activityOptions.map((activity) => (
-                      <label
-                        key={activity}
-                        className="flex items-center space-x-2 text-sm sm:text-base"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={activities.includes(activity)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setActivities([...activities, activity]);
-                            } else {
-                              setActivities(activities.filter((a) => a !== activity));
-                            }
-                          }}
-                          className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4 sm:h-5 sm:w-5"
-                        />
-                        <span>{activity}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sleep Quality
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <MoonIcon className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="range"
-                      min="1"
-                      max="5"
-                      value={sleepQuality}
-                      onChange={(e) => setSleepQuality(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
-                      {getSliderLabel("sleepQuality", sleepQuality)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-xs text-gray-500">
-                    <span>Poor</span>
-                    <span>Excellent</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Energy Level
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <BoltIcon className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="range"
-                      min="1"
-                      max="5"
-                      value={energyLevel}
-                      onChange={(e) => setEnergyLevel(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
-                      {getSliderLabel("energyLevel", energyLevel)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-xs text-gray-500">
-                    <span>Exhausted</span>
-                    <span>Very High</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Social Interactions
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <UserIcon className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      value={socialInteractionCount}
-                      onChange={(e) => setSocialInteractionCount(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
-                      {getSliderLabel("socialInteractionCount", socialInteractionCount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-xs text-gray-500">
-                    <span>None</span>
-                    <span>Very High</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stress Level
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="range"
-                      min="1"
-                      max="5"
-                      value={stressLevel}
-                      onChange={(e) => setStressLevel(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="text-sm font-medium text-indigo-600 min-w-[80px] text-right">
-                      {getSliderLabel("stressLevel", stressLevel)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-xs text-gray-500">
-                    <span>Very Low</span>
-                    <span>Very High</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3"
-                    rows="3"
-                    placeholder="How was your day? What's on your mind?"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Entry"
-                  )}
-                </button>
-              </form>
-
-              {/* Success Message */}
-              {showSuccess && (
-                <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center text-green-700">
-                  <CheckCircleIcon className="h-5 w-5 mr-2" />
-                  Entry saved successfully!
-                </div>
-              )}
-            </div>
+            <MoodForm onSubmit={handleMoodSubmit} isLoading={isLoading} />
 
             {/* Mood History Chart */}
             <div className="bg-white rounded-2xl shadow-lg p-6">

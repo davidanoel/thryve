@@ -27,7 +27,13 @@ export async function POST(req) {
     } = await req.json();
 
     // Validate required fields
-    if (!mood || !sleepQuality || !energyLevel || !socialInteractionCount || !stressLevel) {
+    if (
+      !mood ||
+      sleepQuality === undefined ||
+      energyLevel === undefined ||
+      socialInteractionCount === undefined ||
+      stressLevel === undefined
+    ) {
       return NextResponse.json({ error: "Please provide all required fields." }, { status: 400 });
     }
 
