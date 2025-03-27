@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import User from "@/models/User";
-import RiskAssessment from "@/models/RiskAssessment";
-import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import OpenAI from "openai";
-import { sendEmergencyAlert } from "@/lib/email";
-import { sendEmergencySMS } from "@/lib/twilio";
-import { sendEmergencyNotification } from "@/lib/notifications";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -125,7 +120,7 @@ export async function GET() {
         riskAssessment.riskLevel === "critical" ? verifiedContacts : verifiedContacts.slice(0, 1); // Only notify primary contact for high risk
       // Send notifications to selected contacts
       for (const contact of contactsToNotify) {
-        await sendEmergencyNotification(contact, user, riskAssessment);
+        //await sendEmergencyNotification(contact, user, riskAssessment); todo: add emergency notification when twilio is verified my toll free number
       }
     }
 
