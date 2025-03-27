@@ -2,17 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import {
   ChartBarIcon,
   LightBulbIcon,
@@ -48,67 +37,18 @@ import {
 import { toast } from "react-toastify";
 import AdvancedAnalytics from "@/app/components/AdvancedAnalytics";
 import MoodForm from "@/app/components/MoodForm";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-
-const moodOptions = ["Very Happy", "Happy", "Neutral", "Sad", "Very Sad"];
-const activityOptions = [
-  "Exercise",
-  "Reading",
-  "Meditation",
-  "Social Activity",
-  "Work",
-  "Hobbies",
-  "Rest",
-  "Other",
-];
-
-// Add slider labels
-const sliderLabels = {
-  sleepQuality: {
-    1: "Poor",
-    2: "Fair",
-    3: "Good",
-    4: "Very Good",
-    5: "Excellent",
-  },
-  energyLevel: {
-    1: "Exhausted",
-    2: "Low",
-    3: "Moderate",
-    4: "High",
-    5: "Very High",
-  },
-  socialInteractionCount: {
-    0: "None",
-    2: "Very Low",
-    4: "Low",
-    6: "Moderate",
-    8: "High",
-    10: "Very High",
-  },
-  stressLevel: {
-    1: "Very Low",
-    2: "Low",
-    3: "Moderate",
-    4: "High",
-    5: "Very High",
-  },
-};
+import MoodHistoryChart from "@/app/components/MoodHistoryChart";
+import GoalsAndProgress from "@/app/components/GoalsAndProgress";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [moodHistory, setMoodHistory] = useState([]);
   const [insights, setInsights] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
-  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showGoalForm, setShowGoalForm] = useState(false);
-  const [activeGoalTab, setActiveGoalTab] = useState("active");
   const [riskAssessment, setRiskAssessment] = useState(null);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [showEmergencyContactForm, setShowEmergencyContactForm] = useState(false);
@@ -117,11 +57,11 @@ export default function Dashboard() {
   const [isLoadingRisk, setIsLoadingRisk] = useState(false);
   const [activeInsightTab, setActiveInsightTab] = useState("all");
   const [expandedSections, setExpandedSections] = useState({
-    predictions: true, // Future Predictions expanded by default
+    predictions: true,
     patterns: false,
     correlations: false,
     recommendations: false,
-    trends: true, // Recent Insights sections expanded by default
+    trends: true,
     triggers: true,
     insightsRecommendations: true,
     riskFactors: false,
@@ -142,8 +82,6 @@ export default function Dashboard() {
       setLoading(true);
       try {
         await Promise.all([
-          fetchMoodHistory(),
-          getGoals(),
           //getAIInsights(),
           //getPredictions(),
           //getRiskAssessment(),
@@ -159,100 +97,6 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
-
-  const fetchMoodHistory = async () => {
-    try {
-      const response = await fetch("/api/mood/history");
-      const data = await response.json();
-      setMoodHistory(data.moodEntries);
-    } catch (error) {
-      console.error("Error fetching mood history:", error);
-    }
-  };
-
-  const getGoals = async () => {
-    try {
-      const response = await fetch("/api/goals");
-      if (!response.ok) {
-        throw new Error("Failed to fetch goals");
-      }
-      const data = await response.json();
-      setGoals(data.goals || []);
-    } catch (error) {
-      console.error("Error fetching goals:", error);
-      setError("Failed to load goals");
-    }
-  };
-
-  const handleMoodSubmit = async (formData) => {
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/mood/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        // Refresh data
-        await fetchMoodHistory();
-
-        // Get AI insights
-        setIsAnalyzing(true);
-        await getAIInsights();
-        setIsAnalyzing(false);
-      } else {
-        const data = await response.json();
-        console.error("Error submitting mood:", data.error);
-      }
-    } catch (error) {
-      console.error("Error submitting mood:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getAIInsights = async () => {
-    try {
-      const response = await fetch("/api/ai/insights");
-      const data = await response.json();
-      setInsights(data.insights);
-    } catch (error) {
-      console.error("Error getting AI insights:", error);
-    }
-  };
-
-  const getPredictions = async () => {
-    try {
-      setIsLoadingPredictions(true);
-      const response = await fetch("/api/ai/predictions");
-      const data = await response.json();
-      setPredictions(data.predictions);
-    } catch (error) {
-      console.error("Error getting predictions:", error);
-    } finally {
-      setIsLoadingPredictions(false);
-    }
-  };
-
-  const getRiskAssessment = async () => {
-    try {
-      setIsLoadingRisk(true);
-      const response = await fetch("/api/risk/assessment");
-      if (!response.ok) throw new Error("Failed to fetch risk assessment");
-      const data = await response.json();
-      setRiskAssessment(data.riskAssessment); // Update to access nested data
-    } catch (error) {
-      console.error("Error getting risk assessment:", error);
-      setRiskAssessment(null);
-    } finally {
-      setIsLoadingRisk(false);
-    }
-  };
 
   const getEmergencyContacts = async () => {
     try {
@@ -331,72 +175,70 @@ export default function Dashboard() {
     }
   };
 
-  // Add helper function to get slider label
-  const getSliderLabel = (type, value) => {
-    const labels = sliderLabels[type];
-    const keys = Object.keys(labels).map(Number);
-    const closest = keys.reduce((prev, curr) => {
-      return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
-    });
-    return `${labels[closest]} (${value})`;
-  };
+  const handleMoodSubmit = async (formData) => {
+    setIsLoading(true);
 
-  const chartData = {
-    labels: moodHistory.map((entry) => new Date(entry.createdAt).toLocaleDateString()),
-    datasets: [
-      {
-        label: "Mood",
-        data: moodHistory.map((entry) => {
-          const moodIndex = moodOptions.indexOf(entry.mood);
-          return 4 - moodIndex; // Convert to numerical value (4 = Very Happy, 0 = Very Sad)
-        }),
-        borderColor: "rgb(99, 102, 241)",
-        backgroundColor: "rgba(99, 102, 241, 0.1)",
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 4,
-        ticks: {
-          stepSize: 1,
-          callback: function (value) {
-            return moodOptions[4 - value];
-          },
-        },
-      },
-    },
-  };
-
-  const handleGoalSubmit = (newGoal) => {
-    setGoals([...goals, newGoal]);
-  };
-
-  const handleDeleteGoal = async (goalId) => {
     try {
-      const response = await fetch(`/api/goals?goalId=${goalId}`, {
-        method: "DELETE",
+      const response = await fetch("/api/mood/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete goal");
+      if (response.ok) {
+        // Get AI insights
+        setIsAnalyzing(true);
+        await getAIInsights();
+        setIsAnalyzing(false);
+      } else {
+        const data = await response.json();
+        console.error("Error submitting mood:", data.error);
       }
-
-      setGoals(goals.filter((goal) => goal._id !== goalId));
     } catch (error) {
-      console.error("Error deleting goal:", error);
-      setError("Failed to delete goal");
+      console.error("Error submitting mood:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getAIInsights = async () => {
+    try {
+      const response = await fetch("/api/ai/insights");
+      const data = await response.json();
+      setInsights(data.insights);
+    } catch (error) {
+      console.error("Error getting AI insights:", error);
+    }
+  };
+
+  const getPredictions = async () => {
+    try {
+      setIsLoadingPredictions(true);
+      const response = await fetch("/api/ai/predictions");
+      const data = await response.json();
+      setPredictions(data.predictions);
+    } catch (error) {
+      console.error("Error getting predictions:", error);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  };
+
+  const getRiskAssessment = async () => {
+    try {
+      setIsLoadingRisk(true);
+      const response = await fetch("/api/risk/assessment");
+      if (!response.ok) throw new Error("Failed to fetch risk assessment");
+      const data = await response.json();
+      setRiskAssessment(data.riskAssessment); // Update to access nested data
+    } catch (error) {
+      console.error("Error getting risk assessment:", error);
+      setRiskAssessment(null);
+    } finally {
+      setIsLoadingRisk(false);
     }
   };
 
@@ -426,149 +268,10 @@ export default function Dashboard() {
             <MoodForm onSubmit={handleMoodSubmit} isLoading={isLoading} />
 
             {/* Mood History Chart */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Your Mood History</h2>
-              <div className="h-64">
-                <Line data={chartData} options={chartOptions} />
-              </div>
-            </div>
+            <MoodHistoryChart />
 
             {/* Goals & Progress */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold flex items-center">
-                  <AcademicCapIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-2" />
-                  Goals & Progress
-                </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowGoalForm(true)}
-                    className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Add Goal
-                  </button>
-                  <button
-                    onClick={() =>
-                      setActiveGoalTab(activeGoalTab === "active" ? "completed" : "active")
-                    }
-                    className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-                  >
-                    {activeGoalTab === "active" ? (
-                      <>
-                        <CheckCircleIcon className="h-5 w-5 mr-2" />
-                        Show Completed
-                      </>
-                    ) : (
-                      <>
-                        <FireIcon className="h-5 w-5 mr-2" />
-                        Show Active
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Goals Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {goals
-                  .filter((goal) => goal.status === activeGoalTab)
-                  .map((goal) => (
-                    <div
-                      key={goal._id}
-                      className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`text-sm font-medium px-3 py-1 rounded-full ${
-                              goal.type === "mood"
-                                ? "bg-purple-50 text-purple-600"
-                                : goal.type === "sleep"
-                                  ? "bg-blue-50 text-blue-600"
-                                  : goal.type === "activity"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-orange-50 text-orange-600"
-                            }`}
-                          >
-                            {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
-                          </span>
-                          {goal.status === "completed" && (
-                            <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
-                              Completed
-                            </span>
-                          )}
-                        </div>
-                        {goal.status === "active" && (
-                          <button
-                            onClick={() => handleDeleteGoal(goal._id)}
-                            className="text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.title}</h3>
-                      <p className="text-gray-600 mb-4">{goal.description}</p>
-
-                      {goal.status === "active" ? (
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Target: {goal.target}</span>
-                            {goal.deadline && (
-                              <span className="text-gray-500">
-                                Due: {new Date(goal.deadline).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-500">Progress</span>
-                              <span className="font-medium text-indigo-600">
-                                {Math.round(goal.progress)}%
-                              </span>
-                            </div>
-                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                                style={{
-                                  width: `${Math.min(100, Math.max(0, goal.progress))}%`,
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-                          {goal.deadline && new Date(goal.deadline) < new Date() && (
-                            <div className="text-sm text-red-600 flex items-center">
-                              <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-                              Overdue
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          Completed on: {new Date(goal.completedAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-              </div>
-
-              {goals.filter((goal) => goal.status === activeGoalTab).length === 0 && (
-                <div className="text-center text-gray-500 py-8">
-                  {activeGoalTab === "active" ? (
-                    <>
-                      <AcademicCapIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p>No active goals. Create a new goal to start tracking your progress!</p>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p>No completed goals yet. Keep working towards your active goals!</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+            <GoalsAndProgress />
 
             {/* Emergency Contacts Card */}
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
@@ -2022,143 +1725,151 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {showGoalForm && (
-        <GoalForm onClose={() => setShowGoalForm(false)} onSubmit={handleGoalSubmit} />
+      {showEmergencyContactForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 dark:text-white">Add Emergency Contact</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const contactData = {
+                  name: formData.get("name"),
+                  relationship: formData.get("relationship"),
+                  phone: formData.get("phone"),
+                  email: formData.get("email"),
+                  notificationPreferences: {
+                    alertThreshold: formData.get("alertThreshold"),
+                    methods: Array.from(formData.getAll("notificationMethods")),
+                  },
+                };
+
+                handleAddEmergencyContact(contactData);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  required
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="relationship"
+                  className="block text-sm font-medium mb-1 dark:text-gray-300"
+                >
+                  Relationship
+                </label>
+                <input
+                  type="text"
+                  name="relationship"
+                  id="relationship"
+                  required
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium mb-1 dark:text-gray-300"
+                >
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  id="phone"
+                  required
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium mb-1 dark:text-gray-300"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  required
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="alertThreshold"
+                  className="block text-sm font-medium mb-1 dark:text-gray-300"
+                >
+                  Alert Threshold
+                </label>
+                <select
+                  name="alertThreshold"
+                  id="alertThreshold"
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
+                >
+                  <option value="critical">Critical Risk Only</option>
+                  <option value="high">High Risk and Above</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Notification Methods
+                </label>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="notificationMethods"
+                      value="email"
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="email" className="ml-2 text-sm text-gray-700">
+                      Email
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="notificationMethods"
+                      value="sms"
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="sms" className="ml-2 text-sm text-gray-700">
+                      SMS
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEmergencyContactForm(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Add Contact
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
 }
-
-const GoalForm = ({ onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    type: "mood",
-    target: "",
-    deadline: "",
-  });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/goals", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create goal");
-      }
-
-      const data = await response.json();
-      onSubmit(data.goal);
-      onClose();
-    } catch (error) {
-      console.error("Error creating goal:", error);
-      setError("Failed to create goal");
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4 dark:text-white">Create New Goal</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 dark:text-gray-300">Title</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 dark:text-gray-300">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              rows="3"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 dark:text-gray-300">Type</label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              required
-            >
-              <option value="mood">Mood</option>
-              <option value="sleep">Sleep</option>
-              <option value="activity">Activity</option>
-              <option value="social">Social</option>
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 dark:text-gray-300">
-              Target Value
-            </label>
-            <input
-              type="number"
-              value={formData.target}
-              onChange={(e) => setFormData({ ...formData, target: e.target.value })}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              required
-              min="1"
-              max="5"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1 dark:text-gray-300">
-              Deadline (Optional)
-            </label>
-            <input
-              type="date"
-              value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Create Goal
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-<style jsx>{`
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`}</style>;
