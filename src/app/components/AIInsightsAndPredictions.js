@@ -17,7 +17,6 @@ export default function AIInsightsAndPredictions() {
   const [insights, setInsights] = useState(null);
   const [predictions, setPredictions] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeInsightTab, setActiveInsightTab] = useState("all");
   const [expandedSections, setExpandedSections] = useState({
     predictions: true,
@@ -71,35 +70,51 @@ export default function AIInsightsAndPredictions() {
     }));
   };
 
-  if (loading || isAnalyzing) {
-    return (
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
-        <div className="flex flex-col items-center justify-center py-12">
-          <svg
-            className="animate-spin h-10 w-10 text-indigo-600 mb-4"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <p className="text-gray-600">Analyzing your patterns...</p>
-        </div>
-      </div>
-    );
-  }
+  const formatTimeframe = (timeframe) => {
+    if (!timeframe) return null;
+
+    // Convert relative timeframes to specific dates
+    const now = new Date();
+    let date = new Date(now);
+
+    if (timeframe.toLowerCase().includes("next week")) {
+      date.setDate(now.getDate() + 7);
+    } else if (timeframe.toLowerCase().includes("next month")) {
+      date.setMonth(now.getMonth() + 1);
+    } else if (timeframe.toLowerCase().includes("next year")) {
+      date.setFullYear(now.getFullYear() + 1);
+    } else if (timeframe.toLowerCase().includes("in 2 weeks")) {
+      date.setDate(now.getDate() + 14);
+    } else if (timeframe.toLowerCase().includes("in 3 weeks")) {
+      date.setDate(now.getDate() + 21);
+    } else if (timeframe.toLowerCase().includes("in 4 weeks")) {
+      date.setDate(now.getDate() + 28);
+    }
+
+    // Format the date
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getTimeframeContext = (prediction) => {
+    // Check if it's a risk or warning prediction
+    const isRiskPrediction =
+      prediction.title.toLowerCase().includes("risk") ||
+      prediction.title.toLowerCase().includes("warning") ||
+      prediction.title.toLowerCase().includes("danger") ||
+      prediction.title.toLowerCase().includes("suicide") ||
+      prediction.title.toLowerCase().includes("depression") ||
+      prediction.title.toLowerCase().includes("anxiety");
+
+    if (isRiskPrediction) {
+      return "Period of increased vigilance";
+    } else {
+      return "Predicted occurrence";
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
@@ -141,8 +156,11 @@ export default function AIInsightsAndPredictions() {
           </button>
         </div>
       </div>
-
-      {insights ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="text-gray-600">Analyzing your patterns...</p>
+        </div>
+      ) : insights ? (
         <div className="space-y-8">
           {/* Recent Insights Section (7 days) */}
           {(activeInsightTab === "all" || activeInsightTab === "insights") && (
@@ -458,9 +476,14 @@ export default function AIInsightsAndPredictions() {
                                 </h5>
                                 <div className="flex items-center space-x-2">
                                   {pred.timeframe && (
-                                    <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                                      {pred.timeframe}
-                                    </span>
+                                    <div className="flex flex-col items-end">
+                                      <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                        {formatTimeframe(pred.timeframe)}
+                                      </span>
+                                      <span className="text-xs text-gray-500 mt-1">
+                                        {getTimeframeContext(pred)}
+                                      </span>
+                                    </div>
                                   )}
                                   <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
                                     {pred.confidence}% Confidence
@@ -473,7 +496,7 @@ export default function AIInsightsAndPredictions() {
                               {pred.actionItems && pred.actionItems.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-gray-100">
                                   <h6 className="text-sm font-medium text-gray-900 mb-2">
-                                    Action Steps:
+                                    Recommended Actions:
                                   </h6>
                                   <ul className="space-y-2">
                                     {pred.actionItems.map((item, idx) => (

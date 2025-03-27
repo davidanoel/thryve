@@ -39,7 +39,7 @@ export default function AdvancedAnalytics() {
       }
     };
 
-    //fetchAdvancedAnalytics();
+    fetchAdvancedAnalytics();
   }, []);
 
   const toggleSection = (section) => {
