@@ -111,16 +111,12 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [predictions, setPredictions] = useState(null);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
-  const [advancedMetrics, setAdvancedMetrics] = useState(null);
-  const [isLoadingAdvancedMetrics, setIsLoadingAdvancedMetrics] = useState(false);
   const [goals, setGoals] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMoodForm, setShowMoodForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [activeGoalTab, setActiveGoalTab] = useState("active");
-  const [activeAnalyticsTab, setActiveAnalyticsTab] = useState("overview");
   const [riskAssessment, setRiskAssessment] = useState(null);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [showEmergencyContactForm, setShowEmergencyContactForm] = useState(false);
@@ -190,7 +186,6 @@ export default function Dashboard() {
       }
       const data = await response.json();
       setGoals(data.goals || []);
-      setRecommendations(data.recommendations || []);
     } catch (error) {
       console.error("Error fetching goals:", error);
       setError("Failed to load goals");
@@ -670,236 +665,141 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Goals & Recommendations */}
+            {/* Goals & Progress */}
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h2 className="text-lg sm:text-xl font-semibold flex items-center">
                   <AcademicCapIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 mr-2" />
-                  Goals & Recommendations
+                  Goals & Progress
                 </h2>
-                <button
-                  onClick={() => setShowGoalForm(true)}
-                  className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                >
-                  <PlusIcon className="h-5 w-5 mr-2" />
-                  Add Goal
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowGoalForm(true)}
+                    className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    <PlusIcon className="h-5 w-5 mr-2" />
+                    Add Goal
+                  </button>
+                  <button
+                    onClick={() =>
+                      setActiveGoalTab(activeGoalTab === "active" ? "completed" : "active")
+                    }
+                    className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  >
+                    {activeGoalTab === "active" ? (
+                      <>
+                        <CheckCircleIcon className="h-5 w-5 mr-2" />
+                        Show Completed
+                      </>
+                    ) : (
+                      <>
+                        <FireIcon className="h-5 w-5 mr-2" />
+                        Show Active
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Tabs Navigation */}
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-1 rounded-xl bg-gray-100 p-1 mb-6">
-                <button
-                  onClick={() => setActiveGoalTab("active")}
-                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                    activeGoalTab === "active"
-                      ? "bg-white text-indigo-600 shadow"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  <FireIcon className="h-5 w-5" />
-                  <span>Active Goals</span>
-                </button>
-                <button
-                  onClick={() => setActiveGoalTab("completed")}
-                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                    activeGoalTab === "completed"
-                      ? "bg-white text-indigo-600 shadow"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  <CheckCircleIcon className="h-5 w-5" />
-                  <span>Completed</span>
-                </button>
-                <button
-                  onClick={() => setActiveGoalTab("recommendations")}
-                  className={`flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium flex-1 ${
-                    activeGoalTab === "recommendations"
-                      ? "bg-white text-indigo-600 shadow"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  <SparklesIcon className="h-5 w-5" />
-                  <span>Recommendations</span>
-                </button>
-              </div>
-
-              {/* Tab Content */}
-              <div className="mt-4">
-                {/* Active Goals Tab */}
-                {activeGoalTab === "active" && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {goals
-                        .filter((goal) => goal.status !== "completed")
-                        .map((goal) => (
-                          <div
-                            key={goal._id}
-                            className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
+              {/* Goals Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {goals
+                  .filter((goal) => goal.status === activeGoalTab)
+                  .map((goal) => (
+                    <div
+                      key={goal._id}
+                      className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02] hover:shadow-md"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-sm font-medium px-3 py-1 rounded-full ${
+                              goal.type === "mood"
+                                ? "bg-purple-50 text-purple-600"
+                                : goal.type === "sleep"
+                                  ? "bg-blue-50 text-blue-600"
+                                  : goal.type === "activity"
+                                    ? "bg-green-50 text-green-600"
+                                    : "bg-orange-50 text-orange-600"
+                            }`}
                           >
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center space-x-2">
-                                <span
-                                  className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                    goal.type === "mood"
-                                      ? "bg-purple-50 text-purple-600"
-                                      : goal.type === "sleep"
-                                        ? "bg-blue-50 text-blue-600"
-                                        : goal.type === "activity"
-                                          ? "bg-green-50 text-green-600"
-                                          : "bg-orange-50 text-orange-600"
-                                  }`}
-                                >
-                                  {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => handleDeleteGoal(goal._id)}
-                                className="text-gray-400 hover:text-red-600 transition-colors"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </button>
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.title}</h3>
-                            <p className="text-gray-600 mb-4">{goal.description}</p>
-                            <div className="space-y-3">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Target: {goal.target}</span>
-                                {goal.deadline && (
-                                  <span className="text-gray-500">
-                                    Due: {new Date(goal.deadline).toLocaleDateString()}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm">
-                                  <span className="text-gray-500">Progress</span>
-                                  <span className="font-medium text-indigo-600">
-                                    {Math.round(goal.progress)}%
-                                  </span>
-                                </div>
-                                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                                    style={{
-                                      width: `${Math.min(100, Math.max(0, goal.progress))}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                    {goals.filter((goal) => goal.status !== "completed").length === 0 && (
-                      <div className="text-center text-gray-500 py-8">
-                        <AcademicCapIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>No active goals. Create a new goal to start tracking your progress!</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Completed Goals Tab */}
-                {activeGoalTab === "completed" && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {goals
-                        .filter((goal) => goal.status === "completed")
-                        .map((goal) => (
-                          <div
-                            key={goal._id}
-                            className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
-                                  Completed
-                                </span>
-                                <span
-                                  className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                    goal.type === "mood"
-                                      ? "bg-purple-50 text-purple-600"
-                                      : goal.type === "sleep"
-                                        ? "bg-blue-50 text-blue-600"
-                                        : goal.type === "activity"
-                                          ? "bg-green-50 text-green-600"
-                                          : "bg-orange-50 text-orange-600"
-                                  }`}
-                                >
-                                  {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
-                                </span>
-                              </div>
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.title}</h3>
-                            <p className="text-gray-600 mb-4">{goal.description}</p>
-                            <div className="text-sm text-gray-500">
-                              Completed on: {new Date(goal.completedAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                    {goals.filter((goal) => goal.status === "completed").length === 0 && (
-                      <div className="text-center text-gray-500 py-8">
-                        <CheckCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>No completed goals yet. Keep working towards your active goals!</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Recommendations Tab */}
-                {activeGoalTab === "recommendations" && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {recommendations.map((rec, index) => (
-                        <div
-                          key={index}
-                          className="bg-gray-50 rounded-xl p-4 transform transition-all hover:scale-[1.02]"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span
-                              className={`text-sm font-medium px-3 py-1 rounded-full ${
-                                rec.priority === "high"
-                                  ? "bg-red-50 text-red-600"
-                                  : rec.priority === "medium"
-                                    ? "bg-yellow-50 text-yellow-600"
-                                    : "bg-green-50 text-green-600"
-                              }`}
-                            >
-                              {rec.priority.charAt(0).toUpperCase() + rec.priority.slice(1)}{" "}
-                              Priority
+                            {goal.type.charAt(0).toUpperCase() + goal.type.slice(1)}
+                          </span>
+                          {goal.status === "completed" && (
+                            <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-600">
+                              Completed
                             </span>
-                            <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                              {rec.type.charAt(0).toUpperCase() + rec.type.slice(1)}
-                            </span>
-                          </div>
-                          <p className="text-gray-600">{rec.message}</p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    {recommendations.length === 0 && (
-                      <div className="text-center text-gray-500 py-8">
-                        <SparklesIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>
-                          No recommendations available. Keep tracking your mood and working on your
-                          goals!
-                        </p>
+                        {goal.status === "active" && (
+                          <button
+                            onClick={() => handleDeleteGoal(goal._id)}
+                            className="text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">{goal.title}</h3>
+                      <p className="text-gray-600 mb-4">{goal.description}</p>
+
+                      {goal.status === "active" ? (
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Target: {goal.target}</span>
+                            {goal.deadline && (
+                              <span className="text-gray-500">
+                                Due: {new Date(goal.deadline).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-gray-500">Progress</span>
+                              <span className="font-medium text-indigo-600">
+                                {Math.round(goal.progress)}%
+                              </span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(100, Math.max(0, goal.progress))}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                          {goal.deadline && new Date(goal.deadline) < new Date() && (
+                            <div className="text-sm text-red-600 flex items-center">
+                              <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
+                              Overdue
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          Completed on: {new Date(goal.completedAt).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
+
+              {goals.filter((goal) => goal.status === activeGoalTab).length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  {activeGoalTab === "active" ? (
+                    <>
+                      <AcademicCapIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>No active goals. Create a new goal to start tracking your progress!</p>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>No completed goals yet. Keep working towards your active goals!</p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Emergency Contacts Card */}

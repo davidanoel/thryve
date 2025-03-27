@@ -12,7 +12,7 @@ import {
 
 export default function AdvancedAnalytics() {
   const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     summary: true,
@@ -24,6 +24,7 @@ export default function AdvancedAnalytics() {
 
   useEffect(() => {
     const fetchAdvancedAnalytics = async () => {
+      setLoading(true);
       try {
         const response = await fetch("/api/analytics");
         if (!response.ok) {

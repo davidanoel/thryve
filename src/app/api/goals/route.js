@@ -3,109 +3,6 @@ import { getServerSession } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
-// Helper function to generate recommendations based on goals and mood entries
-function generateRecommendations(goals, moodEntries) {
-  const recentEntries = moodEntries.slice(-7);
-  if (recentEntries.length === 0) {
-    return [];
-  }
-
-  const avgMood =
-    recentEntries.reduce((sum, entry) => {
-      const moodValue = {
-        "Very Happy": 5,
-        Happy: 4,
-        Neutral: 3,
-        Sad: 2,
-        "Very Sad": 1,
-      }[entry.mood];
-      return sum + moodValue;
-    }, 0) / recentEntries.length;
-
-  const avgSleep =
-    recentEntries.reduce((sum, entry) => sum + entry.sleepQuality, 0) / recentEntries.length;
-
-  const avgSocial =
-    recentEntries.reduce((sum, entry) => sum + entry.socialInteractionCount, 0) /
-    recentEntries.length;
-
-  const recommendations = [];
-
-  // Analyze each active goal
-  goals.forEach((goal) => {
-    if (goal.status !== "active") return;
-
-    switch (goal.type) {
-      case "mood":
-        if (avgMood < goal.target) {
-          recommendations.push({
-            type: "mood",
-            message:
-              "Your mood has been lower than your target. Try incorporating more activities you enjoy and practicing self-care.",
-            priority: "high",
-          });
-        }
-        break;
-
-      case "sleep":
-        if (avgSleep < goal.target) {
-          recommendations.push({
-            type: "sleep",
-            message:
-              "Your sleep quality is below your goal. Consider establishing a consistent bedtime routine and limiting screen time before bed.",
-            priority: "high",
-          });
-        }
-        break;
-
-      case "social":
-        if (avgSocial < goal.target) {
-          recommendations.push({
-            type: "social",
-            message:
-              "You're below your social interaction goal. Try reaching out to friends or joining group activities.",
-            priority: "medium",
-          });
-        }
-        break;
-
-      case "activity":
-        const avgActivities =
-          recentEntries.reduce((sum, entry) => sum + entry.activities.length, 0) /
-          recentEntries.length;
-        if (avgActivities < goal.target) {
-          recommendations.push({
-            type: "activity",
-            message:
-              "You're not meeting your activity target. Consider scheduling regular activities throughout your day.",
-            priority: "medium",
-          });
-        }
-        break;
-    }
-  });
-
-  // Add general recommendations based on mood patterns
-  if (avgMood <= 2) {
-    recommendations.push({
-      type: "general",
-      message:
-        "Your mood has been consistently low. Consider speaking with a mental health professional.",
-      priority: "high",
-    });
-  }
-
-  if (avgSleep <= 3) {
-    recommendations.push({
-      type: "general",
-      message: "Poor sleep can significantly impact mood. Focus on improving your sleep hygiene.",
-      priority: "high",
-    });
-  }
-
-  return recommendations;
-}
-
 export async function GET() {
   try {
     const session = await getServerSession();
@@ -119,11 +16,8 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const recommendations = generateRecommendations(user.goals || [], user.moodEntries || []);
-
     return NextResponse.json({
       goals: user.goals || [],
-      recommendations,
     });
   } catch (error) {
     console.error("Error in GET /api/goals:", error);
