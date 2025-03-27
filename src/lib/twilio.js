@@ -30,19 +30,3 @@ export async function sendSMS(to, message) {
     throw error;
   }
 }
-
-export async function sendEmergencySMS(contact, riskAssessment) {
-  console.log("Preparing emergency SMS for contact:", {
-    name: contact.name,
-    phone: contact.phone,
-    riskLevel: riskAssessment.riskLevel,
-    score: riskAssessment.score,
-  });
-
-  const message = `EMERGENCY ALERT: ${riskAssessment.user.name} has been identified as having a ${riskAssessment.riskLevel} risk level. 
-Risk Score: ${riskAssessment.score}
-Key Concerns: ${riskAssessment.factors.map((f) => f.concerns.join(", ")).join("; ")}
-Please check on them immediately.`;
-
-  return sendSMS(contact.phone, message);
-}

@@ -40,28 +40,14 @@ export async function sendVerificationEmail(contact) {
   }
 }
 
-export async function sendEmergencyAlert({ user, contact, riskAssessment }) {
+export async function sendEmail(to, message) {
   try {
-    console.log("Attempting to send emergency alert to:", contact.email);
+    console.log("Attempting to send emergency alert to:", to);
     const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-      to: contact.email,
+      to,
       subject: "Emergency Alert - Support Needed",
-      html: `
-        <h2>Emergency Alert</h2>
-        <p>Hello ${contact.name},</p>
-        <p>This is an alert regarding ${user.name}. Our system has detected a ${riskAssessment.riskLevel} risk level that requires attention.</p>
-        <h3>Risk Assessment Details:</h3>
-        <ul>
-          <li>Risk Level: ${riskAssessment.riskLevel}</li>
-          <li>Overall Score: ${riskAssessment.score}</li>
-        </ul>
-        <p>Please reach out to ${user.name} as soon as possible.</p>
-        <p>Contact Information:</p>
-        <ul>
-          <li>Email: ${user.email}</li>
-        </ul>
-      `,
+      html: message,
     });
     console.log("Emergency alert sent successfully:", result);
     return true;

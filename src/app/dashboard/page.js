@@ -155,8 +155,8 @@ export default function Dashboard() {
         await Promise.all([
           fetchMoodHistory(),
           getGoals(),
-          getAIInsights(),
-          getPredictions(),
+          //getAIInsights(),
+          //getPredictions(),
           getAdvancedMetrics(),
           getRiskAssessment(),
           getEmergencyContacts(),
@@ -300,7 +300,6 @@ export default function Dashboard() {
       const response = await fetch("/api/risk/assessment");
       if (!response.ok) throw new Error("Failed to fetch risk assessment");
       const data = await response.json();
-      console.log("Risk Assessment Data:", data);
       setRiskAssessment(data.riskAssessment); // Update to access nested data
     } catch (error) {
       console.error("Error getting risk assessment:", error);

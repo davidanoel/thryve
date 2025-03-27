@@ -68,6 +68,9 @@ export async function POST(req) {
       verificationExpires,
     });
 
+    // Add contact to user's emergencyContacts array
+    await User.findByIdAndUpdate(session.userId, { $push: { emergencyContacts: contact._id } });
+
     // Send verification email using Resend
     const emailSent = await sendVerificationEmail(contact);
     if (!emailSent) {
@@ -162,6 +165,7 @@ export async function DELETE(req) {
 
     await connectDB();
 
+    // First delete the contact
     const result = await EmergencyContact.deleteOne({
       _id: contactId,
       userId: session.userId,
@@ -170,6 +174,9 @@ export async function DELETE(req) {
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Emergency contact not found" }, { status: 404 });
     }
+
+    // Then remove the contact from user's emergencyContacts array
+    await User.findByIdAndUpdate(session.userId, { $pull: { emergencyContacts: contactId } });
 
     return NextResponse.json({
       success: true,

@@ -126,6 +126,12 @@ const UserSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    emergencyContacts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "EmergencyContact",
+      },
+    ],
   },
   {
     timestamps: true,
