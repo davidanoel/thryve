@@ -4,35 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
   ChartBarIcon,
-  LightBulbIcon,
-  ArrowTrendingUpIcon,
-  HeartIcon,
-  SparklesIcon,
-  CheckCircleIcon,
-  AcademicCapIcon,
-  BeakerIcon,
-  UserGroupIcon,
-  MoonIcon,
-  BoltIcon,
-  UserIcon,
-  ExclamationTriangleIcon,
-  ChartPieIcon,
-  ArrowPathIcon,
-  ArrowTrendingDownIcon,
-  ChartBarSquareIcon,
-  ClockIcon,
-  FireIcon,
-  RectangleStackIcon,
-  ShieldExclamationIcon,
-  PlusIcon,
-  XMarkIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  TrashIcon,
-  GlobeAltIcon,
   ArrowDownTrayIcon,
-  LinkIcon,
-  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import AdvancedAnalytics from "@/app/components/AdvancedAnalytics";
@@ -44,32 +16,10 @@ import AIInsightsAndPredictions from "@/app/components/AIInsightsAndPredictions"
 import RiskAssessment from "@/app/components/RiskAssessment";
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({
-    highRiskAlert: false,
-  });
 
-  // Initial data load
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        await Promise.all([
-          //getRiskAssessment(),
-        ]);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const handleMoodSubmit = async (formData) => {
     setIsLoading(true);
