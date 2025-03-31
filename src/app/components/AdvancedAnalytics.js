@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import {
   ChartBarIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ArrowPathIcon,
+  ArrowTrendingUpIcon,
+  BoltIcon,
+  ArrowTrendingDownIcon,
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/outline";
@@ -50,7 +51,9 @@ export default function AdvancedAnalytics() {
     }));
   };
 
-  if (loading) return <Loader />;
+  if (loading) {
+    return <Loader />;
+  }
 
   if (error) {
     return (
@@ -60,10 +63,10 @@ export default function AdvancedAnalytics() {
     );
   }
 
-  if (!analytics || analytics?.message) {
+  if (!analytics || analytics.message) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">{analytics?.message || "No analytics data available"}</p>
+        <p className="text-gray-500">No analytics data available</p>
       </div>
     );
   }
@@ -132,7 +135,7 @@ export default function AdvancedAnalytics() {
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <ArrowPathIcon className="h-5 w-5 text-blue-500" />
+            <ArrowPathIcon className="h-5 w-5 text-purple-500" />
             <h3 className="text-lg font-semibold text-gray-900">Key Correlations</h3>
           </div>
           {expandedSections.correlations ? (
@@ -148,12 +151,12 @@ export default function AdvancedAnalytics() {
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">
-                      {correlation.factor1} ↔ {correlation.factor2}
+                      {correlation.factors.join(" ↔ ")}
                     </span>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         correlation.strength === "strong"
-                          ? "bg-blue-100 text-blue-800"
+                          ? "bg-purple-100 text-purple-800"
                           : correlation.strength === "moderate"
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-gray-100 text-gray-800"
@@ -177,7 +180,7 @@ export default function AdvancedAnalytics() {
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <ArrowTrendingUpIcon className="h-5 w-5 text-blue-500" />
+            <ArrowTrendingUpIcon className="h-5 w-5 text-green-500" />
             <h3 className="text-lg font-semibold text-gray-900">Patterns</h3>
           </div>
           {expandedSections.patterns ? (
@@ -230,7 +233,7 @@ export default function AdvancedAnalytics() {
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <ChartBarIcon className="h-5 w-5 text-blue-500" />
+            <BoltIcon className="h-5 w-5 text-orange-500" />
             <h3 className="text-lg font-semibold text-gray-900">Activity Impact</h3>
           </div>
           {expandedSections.activityImpact ? (
@@ -246,15 +249,19 @@ export default function AdvancedAnalytics() {
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">{activity.activity}</span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {activity.moodImpact.toFixed(1)} Impact
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      {Math.round(activity.moodImpact * 25)}% Impact
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${(activity.moodImpact / 4) * 100}%` }}
+                      className="bg-orange-500 h-2 rounded-full"
+                      style={{ width: `${activity.moodImpact * 25}%` }}
                     ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Low Impact</span>
+                    <span>High Impact</span>
                   </div>
                   <p className="text-sm text-gray-600">{activity.recommendation}</p>
                 </div>
@@ -271,7 +278,7 @@ export default function AdvancedAnalytics() {
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <ArrowTrendingDownIcon className="h-5 w-5 text-blue-500" />
+            <ArrowTrendingDownIcon className="h-5 w-5 text-cyan-500" />
             <h3 className="text-lg font-semibold text-gray-900">Seasonal Trends</h3>
           </div>
           {expandedSections.seasonalTrends ? (
@@ -290,7 +297,7 @@ export default function AdvancedAnalytics() {
                       {trend.period.charAt(0).toUpperCase() + trend.period.slice(1)}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
                         {trend.averageMood.toFixed(1)} Avg Mood
                       </span>
                       <span

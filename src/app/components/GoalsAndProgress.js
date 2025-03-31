@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PlusIcon, TrashIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import Loader from "@/app/components/Loader";
 
 export default function GoalsAndProgress() {
   const [goals, setGoals] = useState([]);
@@ -102,17 +103,7 @@ export default function GoalsAndProgress() {
   );
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loader />;
   }
 
   return (

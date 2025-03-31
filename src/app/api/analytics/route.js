@@ -62,8 +62,7 @@ export async function GET(request) {
           {
             "correlations": [
               {
-                "factor1": "string",
-                "factor2": "string",
+                "factors": ["string (array of correlated factors)"],
                 "correlation": number,
                 "strength": "strong|moderate|weak",
                 "description": "string"

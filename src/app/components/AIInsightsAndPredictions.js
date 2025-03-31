@@ -17,7 +17,7 @@ import Loader from "@/app/components/Loader";
 export default function AIInsightsAndPredictions() {
   const [insights, setInsights] = useState(null);
   const [predictions, setPredictions] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeInsightTab, setActiveInsightTab] = useState("all");
   const [expandedSections, setExpandedSections] = useState({
     predictions: true,
