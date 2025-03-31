@@ -58,7 +58,8 @@ function generateNotificationContent(riskAssessment, user) {
 
   // SMS Format - Concise and urgent
   const smsContent =
-    `🚨 EMERGENCY ALERT FOR ${user.name} 🚨\n\n` +
+    `🚨 EMERGENCY ALERT 🚨\n\n` +
+    `For: ${user.name.toUpperCase()}\n` +
     `Risk Level: ${riskLevel.toUpperCase()}\n` +
     `Score: ${score}\n\n` +
     `Key Factors:\n` +
@@ -85,10 +86,11 @@ function generateNotificationContent(riskAssessment, user) {
   // Email Format - Detailed and formatted
   const emailContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: #dc2626; text-align: center;">🚨 Emergency Alert For ${user.name}: Mental Health Risk</h1>
+      <h1 style="color: #dc2626; text-align: center;">🚨 Emergency Alert: Mental Health Risk</h1>
       
       <div style="background-color: #fef2f2; border-radius: 8px; padding: 20px; margin: 20px 0;">
         <h2 style="color: #dc2626; margin-top: 0;">Risk Level: ${riskLevel.toUpperCase()}</h2>
+        <p style="font-size: 18px; margin: 10px 0;">For: ${user.name.toUpperCase()}</p>
         <p style="font-size: 18px; margin: 10px 0;">Risk Score: ${score}</p>
       </div>
 
