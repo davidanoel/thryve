@@ -24,8 +24,8 @@ export default function AIInsightsAndPredictions() {
     correlations: false,
     recommendations: false,
     trends: true,
-    triggers: true,
-    insightsRecommendations: true,
+    triggers: false,
+    insightsRecommendations: false,
   });
 
   useEffect(() => {

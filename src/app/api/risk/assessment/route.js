@@ -6,6 +6,7 @@ import OpenAI from "openai";
 import { sendEmergencyNotification } from "@/lib/notifications";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -35,12 +36,12 @@ export async function GET() {
     const moodData = moodEntries.map((entry) => ({
       date: entry.createdAt,
       mood: entry.mood,
-      activities: entry.activities,
-      notes: entry.notes,
-      sleep: entry.sleepQuality,
-      stress: entry.stressLevel,
-      energy: entry.energyLevel,
-      social: entry.socialInteractionCount,
+      activities: entry.activities || [],
+      notes: entry.notes || "",
+      sleep: entry.sleepQuality || 0,
+      stress: entry.stressLevel || 0,
+      energy: entry.energyLevel || 0,
+      social: entry.socialInteractionCount || 0,
     }));
 
     // Generate AI risk assessment
