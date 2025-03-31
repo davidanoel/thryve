@@ -41,12 +41,12 @@ export async function GET(request) {
     const moodData = moodEntries.map((entry) => ({
       date: entry.createdAt,
       mood: entry.mood,
-      activities: entry.activities || [],
-      notes: entry.notes || "",
-      sleepQuality: entry.sleepQuality || 0,
-      stressLevel: entry.stressLevel || 0,
-      energyLevel: entry.energyLevel || 0,
-      socialInteractionCount: entry.socialInteractionCount || 0,
+      activities: entry.activities,
+      notes: entry.notes,
+      sleepQuality: entry.sleepQuality,
+      stressLevel: entry.stressLevel,
+      energyLevel: entry.energyLevel,
+      socialInteractionCount: entry.socialInteractionCount,
     }));
 
     // Generate advanced analytics using OpenAI

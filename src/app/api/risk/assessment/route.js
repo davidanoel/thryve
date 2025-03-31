@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
 import User from "@/models/User";
+import EmergencyContact from "@/models/EmergencyContact";
 import connectDB from "@/lib/mongodb";
 import OpenAI from "openai";
 import { sendEmergencyNotification } from "@/lib/notifications";
@@ -36,12 +37,12 @@ export async function GET() {
     const moodData = moodEntries.map((entry) => ({
       date: entry.createdAt,
       mood: entry.mood,
-      activities: entry.activities || [],
-      notes: entry.notes || "",
-      sleep: entry.sleepQuality || 0,
-      stress: entry.stressLevel || 0,
-      energy: entry.energyLevel || 0,
-      social: entry.socialInteractionCount || 0,
+      activities: entry.activities,
+      notes: entry.notes,
+      sleep: entry.sleepQuality,
+      stress: entry.stressLevel,
+      energy: entry.energyLevel,
+      social: entry.socialInteractionCount,
     }));
 
     // Generate AI risk assessment
@@ -110,21 +111,29 @@ export async function GET() {
 
     // Check if emergency notifications should be sent
     if (riskAssessment.riskLevel === "critical" || riskAssessment.riskLevel === "high") {
-      // Get user's emergency contacts with populated data
-      const userWithContacts = await User.findById(session.userId).populate("emergencyContacts");
+      try {
+        // Get user's emergency contacts with populated data
+        const userWithContacts = await User.findById(session.userId).populate({
+          path: "emergencyContacts",
+          model: EmergencyContact,
+        });
 
-      const emergencyContacts = userWithContacts.emergencyContacts || [];
+        const emergencyContacts = userWithContacts.emergencyContacts || [];
 
-      // Filter for verified contacts only
-      const verifiedContacts = emergencyContacts.filter((contact) => contact.isVerified);
+        // Filter for verified contacts only
+        const verifiedContacts = emergencyContacts.filter((contact) => contact.isVerified);
 
-      // Send notifications to all verified contacts for critical risk, primary contact for high risk
-      // Note: First contact in the array is considered primary
-      const contactsToNotify =
-        riskAssessment.riskLevel === "critical" ? verifiedContacts : verifiedContacts.slice(0, 1); // Only notify primary contact for high risk
-      // Send notifications to selected contacts
-      for (const contact of contactsToNotify) {
-        await sendEmergencyNotification(contact, user, riskAssessment);
+        // Send notifications to all verified contacts for critical risk, primary contact for high risk
+        const contactsToNotify =
+          riskAssessment.riskLevel === "critical" ? verifiedContacts : verifiedContacts.slice(0, 1);
+
+        // Send notifications to selected contacts
+        for (const contact of contactsToNotify) {
+          await sendEmergencyNotification(contact, user, riskAssessment);
+        }
+      } catch (error) {
+        console.error("Error sending emergency notifications:", error);
+        // Continue with the response even if notifications fail
       }
     }
 

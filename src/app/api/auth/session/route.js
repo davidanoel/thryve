@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     // Get the token from the cookies
-    const token = cookies().get("token")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json({ user: null });

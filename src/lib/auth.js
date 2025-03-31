@@ -11,7 +11,7 @@ export const verifyAuth = async (token) => {
 };
 
 export const getServerSession = async () => {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("token");
 
   if (!token) {
@@ -22,8 +22,8 @@ export const getServerSession = async () => {
   return decoded;
 };
 
-export const setAuthCookie = (token) => {
-  cookies().set("token", token, {
+export const setAuthCookie = async (token) => {
+  await cookies().set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
@@ -32,6 +32,6 @@ export const setAuthCookie = (token) => {
   });
 };
 
-export const removeAuthCookie = () => {
-  cookies().delete("token");
+export const removeAuthCookie = async () => {
+  await cookies().delete("token");
 };
