@@ -148,7 +148,7 @@ TWILIO_PHONE_NUMBER=your_twilio_phone_number
 - **Backend**: Next.js API Routes
 - **Database**: MongoDB with Mongoose
 - **Authentication**: JWT
-- **AI**: OpenAI GPT-4
+- **AI**: OpenAI GPT-3.5 Turbo
 - **Email**: Resend
 - **SMS**: Twilio
 - **Charts**: Chart.js

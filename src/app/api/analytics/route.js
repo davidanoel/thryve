@@ -51,7 +51,7 @@ export async function GET(request) {
 
     // Generate advanced analytics using OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -105,7 +105,7 @@ export async function GET(request) {
         },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 800,
     });
 
     const analysis = JSON.parse(completion.choices[0].message.content);

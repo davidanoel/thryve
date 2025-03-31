@@ -60,7 +60,7 @@ export async function GET() {
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 800,
     });
 
     // Parse AI response into structured risk assessment
