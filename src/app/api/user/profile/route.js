@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import connectDB from "@/lib/mongodb";
 
+export const runtime = "nodejs";
+
 export async function PUT(req) {
   try {
     // Get the token from cookies

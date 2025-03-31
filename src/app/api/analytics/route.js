@@ -4,6 +4,8 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import OpenAI from "openai";
 
+export const runtime = "nodejs";
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });

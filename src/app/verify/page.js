@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 
-export default function VerifyPage() {
+function VerifyContent() {
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -11,6 +12,14 @@ export default function VerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const contactId = searchParams.get("id");
+  const { verifyEmail } = useAuth();
+  const token = searchParams.get("token");
+
+  useEffect(() => {
+    if (token) {
+      verifyEmail(token);
+    }
+  }, [token, verifyEmail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,5 +161,23 @@ export default function VerifyPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Verify() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full space-y-8">
+            <div>
+              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Loading...</h2>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <VerifyContent />
+    </Suspense>
   );
 }
