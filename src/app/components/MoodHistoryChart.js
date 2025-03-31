@@ -13,14 +13,14 @@ import {
   Legend,
 } from "chart.js";
 import { ChartBarIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-
+import Loader from "@/app/components/Loader";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const moodOptions = ["Very Happy", "Happy", "Neutral", "Sad", "Very Sad"];
 
 export default function MoodHistoryChart() {
   const [moodHistory, setMoodHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState("7d"); // 7d, 30d, 90d
 
@@ -143,7 +143,7 @@ export default function MoodHistoryChart() {
         <div className="text-red-600 text-sm">{error}</div>
       ) : isLoading ? (
         <div className="h-64 flex items-center justify-center">
-          <ArrowPathIcon className="h-8 w-8 text-gray-400 animate-spin" />
+          <Loader />
         </div>
       ) : moodHistory.length === 0 ? (
         <div className="h-64 flex items-center justify-center text-gray-500">

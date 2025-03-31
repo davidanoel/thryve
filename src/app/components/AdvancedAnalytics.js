@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/outline";
+import Loader from "@/app/components/Loader";
 
 export default function AdvancedAnalytics() {
   const [analytics, setAnalytics] = useState(null);
@@ -49,13 +50,7 @@ export default function AdvancedAnalytics() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  if (loading) return <Loader />;
 
   if (error) {
     return (
@@ -65,10 +60,10 @@ export default function AdvancedAnalytics() {
     );
   }
 
-  if (!analytics) {
+  if (!analytics || analytics?.message) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No analytics data available</p>
+        <p className="text-gray-500">{analytics?.message || "No analytics data available"}</p>
       </div>
     );
   }

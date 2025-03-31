@@ -27,6 +27,13 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if user has any mood entries
+    if (!user.moodEntries || user.moodEntries.length === 0) {
+      return NextResponse.json({
+        message: "Please add some mood entries to get a risk assessment.",
+      });
+    }
+
     // Get user's mood entries for the last 30 days
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const moodEntries = user.moodEntries

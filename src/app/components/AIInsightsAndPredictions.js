@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   LinkIcon,
 } from "@heroicons/react/24/outline";
+import Loader from "@/app/components/Loader";
 
 export default function AIInsightsAndPredictions() {
   const [insights, setInsights] = useState(null);
@@ -157,9 +158,7 @@ export default function AIInsightsAndPredictions() {
         </div>
       </div>
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <p className="text-gray-600">Analyzing your patterns...</p>
-        </div>
+        <Loader />
       ) : insights ? (
         <div className="space-y-8">
           {/* Recent Insights Section (7 days) */}

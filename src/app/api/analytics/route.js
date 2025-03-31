@@ -25,6 +25,12 @@ export async function GET(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    if (!user.moodEntries || user.moodEntries.length === 0) {
+      return NextResponse.json({
+        message: "No mood entries found. Please add some entries to get analytics.",
+      });
+    }
+
     // Get last 90 days of mood data for comprehensive analysis
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
@@ -33,10 +39,6 @@ export async function GET(request) {
     const moodEntries = user.moodEntries
       .filter((entry) => new Date(entry.createdAt) >= ninetyDaysAgo)
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-    if (!moodEntries.length) {
-      return NextResponse.json({ error: "No mood data available" }, { status: 404 });
-    }
 
     // Prepare data for AI analysis
     const moodData = moodEntries.map((entry) => ({
