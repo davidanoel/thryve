@@ -273,7 +273,7 @@ export default function MoodForm({ onSubmit, isLoading }) {
         {/* Notes */}
         <div>
           <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-            Additional Notes
+            Journal
           </label>
           <textarea
             id="notes"
